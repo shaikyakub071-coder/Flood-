@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Road & Flood Control</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, sans-serif;
+               background: #0f172a; color: white; }
+        .header { background: linear-gradient(135deg, #0f172a, #1e293b);
+                  padding: 25px; text-align: center;
+                  border-bottom: 2px solid #334155; }
+        .header h1 { margin: 0; color: #38bdf8; font-size: 30px; }
+        .header p { color: #cbd5e1; margin-top: 8px; }
+        .container { width: 95%; max-width: 1200px; margin: 25px auto; }
+        a.back { color: #38bdf8; text-decoration: none; font-weight: bold; }
+        .msg { background: #14532d; color: #bbf7d0; padding: 15px;
+               border-radius: 8px; margin-bottom: 20px; }
+        .err { background: #7f1d1d; color: #fecaca; padding: 15px;
+               border-radius: 8px; margin-bottom: 20px; }
+        .road-box { background: #1e293b; padding: 20px;
+                    border-radius: 12px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #334155; padding: 12px; }
+        td { padding: 10px; text-align: center;
+             border-bottom: 1px solid #475569; }
+        select { padding: 8px; border-radius: 6px;
+                 border: 1px solid #475569;
+                 background: #0f172a; color: white; }
+        .save-btn { padding: 8px 16px; background: #0284c7; color: white;
+                    border: none; border-radius: 6px; font-weight: bold;
+                    cursor: pointer; }
+        .save-btn:hover { background: #0369a1; }
+        .low, .open { color: #22c55e; font-weight: bold; }
+        .medium { color: #f59e0b; font-weight: bold; }
+        .high, .blocked { color: #ef4444; font-weight: bold; }
+        .submerged { color: #a855f7; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>🛠️ Admin: Road & Flood Control</h1>
+    <p>Update flood levels and block or open roads. Routes change instantly.</p>
+</div>
+
+<div class="container">
+    <p>
+        <a class="back" href="/">← Back to Route Planner</a>
+        &nbsp;|&nbsp;
+        <a class="back" href="/logout">🔓 Logout</a>
+    </p>
+
+    {% if message %}<div class="msg">✅ {{ message }}</div>{% endif %}
+    {% if error %}<div class="err">❌ {{ error }}</div>{% endif %}
+
+    <div class="road-box">
+        <table>
+            <thead>
+                <tr>
+                    <th>Road</th>
+                    <th>Distance (km)</th>
+                    <th>Current Flood</th>
+                    <th>Current Status</th>
+                    <th>New Flood Level</th>
+                    <th>New Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for road in roads %}
+                <tr>
+                    <form method="POST" action="/update_road">
+                        <td>
+                            {{ road[0] }}
+                            <input type="hidden" name="road_name"
+                                   value="{{ road[0] }}">
+                        </td>
+                        <td>{{ road[3] }}</td>
+                        <td class="{{ road[4]|lower }}">{{ road[4]|upper }}</td>
+                        <td class="{{ road[5]|lower }}">{{ road[5]|upper }}</td>
+                        <td>
+                            <select name="flood_level">
+                                {% for lvl in ['low', 'medium', 'high', 'submerged'] %}
+                                <option value="{{ lvl }}"
+                                    {% if road[4] == lvl %}selected{% endif %}>
+                                    {{ lvl|capitalize }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <select name="status">
+                                {% for st in ['open', 'blocked'] %}
+                                <option value="{{ st }}"
+                                    {% if road[5] == st %}selected{% endif %}>
+                                    {{ st|capitalize }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <button class="save-btn" type="submit">Save</button>
+                        </td>
+                    </form>
+                </tr>
+            {% else %}
+                <tr><td colspan="7">No road records found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="road-box" style="margin-top:25px;">
+        <h2 style="color:#38bdf8;margin-top:0;">👥 Zone Populations</h2>
+        <p style="color:#94a3b8;margin-top:0;">
+            How many people live in each zone, and how many of them are
+            vulnerable (elderly, disabled, patients). Vulnerable people
+            are evacuated first. "Still to evacuate" goes down when you
+            confirm an evacuation.
+        </p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Zone</th>
+                    <th>Still to evacuate</th>
+                    <th>Full population</th>
+                    <th>Vulnerable (waiting)</th>
+                    <th>Set population and vulnerable</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for z in zones %}
+                <tr>
+                    <form method="POST" action="/update_population">
+                        <td>
+                            {{ z[0] }}
+                            <input type="hidden" name="zone" value="{{ z[0] }}">
+                        </td>
+                        <td>{{ z[1] }}</td>
+                        <td>{{ z[2] }}</td>
+                        <td>{{ [z[3], z[1]]|min }}</td>
+                        <td>
+                            <input type="number" name="people" min="0"
+                                   value="{{ z[2] }}" required
+                                   title="Population"
+                                   style="width:90px;padding:8px;
+                                          border-radius:6px;
+                                          border:1px solid #475569;
+                                          background:#0f172a;color:white;">
+                            <input type="number" name="vulnerable" min="0"
+                                   value="{{ z[4] }}" required
+                                   title="Vulnerable (elderly, disabled, patients)"
+                                   style="width:90px;padding:8px;
+                                          border-radius:6px;
+                                          border:1px solid #475569;
+                                          background:#0f172a;color:white;">
+                            <button class="save-btn" type="submit">Save</button>
+                        </td>
+                    </form>
+                </tr>
+            {% else %}
+                <tr><td colspan="5">No zones found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="road-box" style="margin-top:25px;">
+        <h2 style="color:#38bdf8;margin-top:0;">🕒 Flood History (latest changes)</h2>
+        <p style="color:#94a3b8;margin-top:0;">
+            Every change to a road is logged with its time, so you can
+            review how the flood spread.
+        </p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Road</th>
+                    <th>Flood</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for h in history %}
+                <tr>
+                    <td>{{ h[0] }}</td>
+                    <td>{{ h[1] }}</td>
+                    <td>{{ h[2]|upper }} → <b>{{ h[3]|upper }}</b></td>
+                    <td>{{ h[4]|upper }} → <b>{{ h[5]|upper }}</b></td>
+                </tr>
+            {% else %}
+                <tr><td colspan="4">No changes yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="road-box" style="margin-top:25px;">
+        <h2 style="color:#38bdf8;margin-top:0;">🏠 Shelter Occupancy</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Shelter</th>
+                    <th>Capacity</th>
+                    <th>Occupied</th>
+                    <th>Free</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for s in shelters %}
+                <tr>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.capacity }}</td>
+                    <td>{{ s.occupied }}</td>
+                    <td class="{{ 'high' if s.is_full() else 'low' }}">
+                        {{ s.available() }}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <form method="POST" action="/reset_shelters">
+            <button class="save-btn" type="submit"
+                    style="margin-top:15px;background:#dc2626;">
+                Reset: empty all shelters and restore zone populations
+            </button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
