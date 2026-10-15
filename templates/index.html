@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('title') }}</title>
+
+    <!-- LEAFLET -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        /* ---------- GENERAL ---------- */
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+        }
+
+        /* ---------- HEADER ---------- */
+        .header {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            padding: 25px;
+            text-align: center;
+            border-bottom: 2px solid #334155;
+        }
+        .header h1 { margin: 0; color: #38bdf8; font-size: 32px; }
+        .header p { color: #cbd5e1; margin-top: 8px; }
+        .container { width: 95%; max-width: 1400px; margin: 25px auto; }
+
+        /* ---------- SEARCH BOX ---------- */
+        .search-box {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+        .search-box h2 { margin-top: 0; color: #38bdf8; }
+        .form-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: end; }
+        .form-group { flex: 1; min-width: 250px; }
+        label { display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: bold; }
+        select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 7px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: white;
+            font-size: 15px;
+        }
+        .search-btn {
+            padding: 12px 25px;
+            background: #0284c7;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .search-btn:hover { background: #0369a1; }
+
+        /* ---------- ERROR ---------- */
+        .error {
+            background: #7f1d1d;
+            color: #fecaca;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        /* ---------- ROUTE RESULT ---------- */
+        .route-box {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        .route-box h2 { color: #22c55e; margin-top: 0; }
+        .route-list { padding-left: 25px; }
+        .route-list li {
+            padding: 10px;
+            margin-bottom: 6px;
+            background: #334155;
+            border-radius: 5px;
+        }
+        .distance {
+            margin-top: 15px;
+            padding: 15px;
+            background: #0f172a;
+            border-radius: 7px;
+            color: #38bdf8;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        /* ---------- WEIGHTED GRAPH OF A ROUTE (NEW) ---------- */
+        .wg { margin-top: 15px; padding: 15px; background: #0f172a;
+              border-radius: 8px; }
+        .wg h3 { margin: 0 0 12px; color: #38bdf8; }
+        .wg-node { padding: 10px 12px; background: #334155;
+                   border-radius: 20px; font-weight: bold; }
+        .wg-edge { display: flex; align-items: center; gap: 10px;
+                   flex-wrap: wrap; margin: 4px 0 4px 18px;
+                   padding-left: 12px; border-left: 3px solid #38bdf8; }
+        .wg-weight { background: #0284c7; color: white; padding: 4px 10px;
+                     border-radius: 6px; font-weight: bold; }
+        .wg-detail { color: #94a3b8; font-size: 13px; }
+        .wg-total { margin-top: 12px; color: #22c55e; font-weight: bold; }
+
+        /* ---------- MAP ---------- */
+        .map-container {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        .map-container h2 { color: #38bdf8; margin-top: 0; }
+        #map {
+            width: 100%;
+            height: 550px;
+            border-radius: 10px;
+            border: 2px solid #475569;
+        }
+        #routingStatus { margin-top: 12px; color: #94a3b8; font-size: 14px; }
+
+        /* ---------- START / DESTINATION LABELS ---------- */
+        .start-label {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .destination-label {
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        /* ---------- WEIGHT LABELS ON MAP (NEW) ---------- */
+        .weight-label {
+            background: #0f172a;
+            color: #ffffff;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 18px;
+        }
+
+        /* ---------- LEGEND ---------- */
+        .legend {
+            background: #1e293b;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+        .legend-item { color: #cbd5e1; }
+
+        /* ---------- ROAD TABLE ---------- */
+        .road-box {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin-bottom: 25px;
+        }
+        .road-box h2 { color: #38bdf8; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { background: #334155; color: white; padding: 12px; }
+        td { padding: 12px; text-align: center; border-bottom: 1px solid #475569; }
+
+        /* ---------- STATUS COLORS ---------- */
+        .low { color: #22c55e; font-weight: bold; }
+        .medium { color: #f59e0b; font-weight: bold; }
+        .high { color: #ef4444; font-weight: bold; }
+        .blocked { color: #ef4444; font-weight: bold; }
+        .submerged { color: #a855f7; font-weight: bold; }
+        .open { color: #22c55e; font-weight: bold; }
+
+        footer { text-align: center; padding: 25px; color: #94a3b8; }
+
+        @media (max-width: 700px) {
+            .header h1 { font-size: 24px; }
+            #map { height: 450px; }
+        }
+
+        @media print {
+            body { background: white !important; color: black !important; }
+            .header, .search-box, .no-print, .filters, a.back, #liveBar, #changeBanner, .map-container, footer { display: none !important; }
+            .route-box { background: white !important; color: black !important; border: 2px solid #0f172a; box-shadow: none; padding: 20px !important; }
+            .route-box h2 { color: #0f172a !important; }
+            .distance, .wg, .wg-node, .wg-edge, li { background: #f1f5f9 !important; color: black !important; border: 1px solid #cbd5e1; }
+            .route-box::before {
+                content: "EMERGENCY FLOOD EVACUATION GUIDANCE - DISASTER MANAGEMENT AUTHORITY";
+                display: block; font-weight: bold; font-size: 16px; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+{# Weighted graph of one route: nodes joined by edges labelled with weight #}
+{% macro weighted_graph(edges, title) %}
+<div class="wg">
+    <h3>{{ title }}</h3>
+    {% for e in edges %}
+    <div class="wg-node">📍 {{ e['from'] }}</div>
+    <div class="wg-edge">
+        <span class="wg-weight">{{ t('weight_word') }} {{ "%.1f"|format(e['weight']) }}</span>
+        <span class="wg-detail">
+            {{ "%.1f"|format(e['distance']) }} km + {{ e['risk'] }} {{ t('flood_penalty') }}
+        </span>
+    </div>
+    {% if loop.last %}
+    <div class="wg-node">📍 {{ e['to'] }}</div>
+    {% endif %}
+    {% endfor %}
+    <div class="wg-total">
+        {{ t('total_weight') }}: {{ "%.1f"|format(edges|sum(attribute='weight')) }}
+    </div>
+</div>
+{% endmacro %}
+
+<!-- HEADER -->
+<div class="header">
+    <h1>🌊 {{ t('title') }}</h1>
+    <p>{{ t('subtitle') }}</p>
+    <p>
+        <a href="/admin" style="color:#38bdf8;font-weight:bold;text-decoration:none;">
+            🛠️ {{ t('admin_link') }}
+        </a>
+        &nbsp;|&nbsp;
+        <a href="/evacuate-all" style="color:#38bdf8;font-weight:bold;text-decoration:none;">
+            🚨 {{ t('evac_all_link') }}
+        </a>
+    </p>
+<p style="font-size:14px;">
+        🌐 {% for code, name in languages.items() %}<a href="/lang/{{ code }}?next={{ request.path }}"
+           style="color:{{ '#ffffff' if code == lang else '#38bdf8' }};font-weight:bold;text-decoration:none;margin:0 6px;">{{ name }}</a>{% endfor %}
+    </p>
+    <p id="liveBar" style="font-size:14px;color:#94a3b8;">
+        ⏳ Connecting to live updates...
+    </p>
+</div>
+
+<div class="container">
+
+<!-- SEARCH -->
+<div class="search-box">
+    <h2>🚗 {{ t('find_route') }}</h2>
+    <form method="POST" id="searchForm">
+        <div class="form-row">
+
+            <!-- STARTING LOCATION -->
+            <div class="form-group">
+                <label>{{ t('start_loc') }}</label>
+                <select name="source" required>
+                    <option value="">{{ t('select_start') }}</option>
+                    {% for location in locations %}
+                    <option value="{{ location }}"
+                        {% if request.form.get('source') == location %}selected{% endif %}>
+                        {{ location }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- DESTINATION -->
+            <div class="form-group">
+                <label>{{ t('destination') }}</label>
+                <select name="destination" required>
+                    <option value="">{{ t('select_dest') }}</option>
+                    <option value="AUTO"
+                        {% if request.form.get('destination') == 'AUTO' %}selected{% endif %}>
+                        ⭐ {{ t('nearest_auto') }}
+                    </option>
+                    {% for location in locations %}
+                    <option value="{{ location }}"
+                        {% if request.form.get('destination') == location %}selected{% endif %}>
+                        {{ location }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- PEOPLE TO EVACUATE -->
+            <div class="form-group" style="min-width:150px;max-width:200px;">
+                <label>{{ t('people') }}</label>
+                <input type="number" name="people" min="1" value="{{ people }}"
+                       style="width:100%;padding:12px;border-radius:7px;
+                              border:1px solid #475569;background:#0f172a;
+                              color:white;font-size:15px;">
+            </div>
+
+            <!-- BUTTON -->
+            <div>
+                <button class="search-btn" type="submit">🔍 {{ t('find_btn') }}</button>
+            </div>
+
+            <!-- SURGE SIMULATOR SLIDER -->
+            <div style="width:100%;margin-top:15px;padding:12px 16px;background:#0f172a;border-radius:8px;border:1px solid #334155;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                    <div>
+                        <span style="color:#38bdf8;font-weight:bold;">{{ t('sim_title') }}</span>:
+                        <span id="surgeLabel" style="margin-left:8px;padding:3px 10px;background:#0284c7;border-radius:12px;font-size:13px;font-weight:bold;color:white;">
+                            +{{ "%.1f"|format(surge) }}m River Rise
+                        </span>
+                        <span style="color:#94a3b8;font-size:12px;margin-left:8px;">{{ t('sim_desc') }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;min-width:240px;">
+                        <span style="font-size:12px;color:#22c55e;">Normal (0m)</span>
+                        <input type="range" name="surge" id="surgeSlider" min="0" max="1.5" step="0.5" value="{{ surge }}"
+                               style="flex:1;cursor:pointer;" oninput="document.getElementById('surgeLabel').innerText = '+' + parseFloat(this.value).toFixed(1) + 'm River Rise'">
+                        <span style="font-size:12px;color:#ef4444;">Severe (+1.5m)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- ERROR / MESSAGE -->
+{% if error %}
+<div class="error">❌ {{ error }}</div>
+{% endif %}
+{% if message %}
+<div style="background:#14532d;color:#bbf7d0;padding:15px;
+            border-radius:8px;margin-bottom:20px;">
+    ✅ {{ message }}
+</div>
+{% endif %}
+
+<!-- LIVE CHANGE ALERT (hidden until road/shelter data changes) -->
+<div id="changeBanner"
+     style="display:none;background:#78350f;color:#fde68a;padding:15px;
+            border-radius:8px;margin-bottom:20px;">
+    ⚠️ <b>{{ t('changed_bold') }}</b>
+    {{ t('changed_rest') }}
+    <button type="button" class="search-btn"
+            style="margin-left:10px;margin-top:8px;padding:8px 16px;"
+            onclick="document.getElementById('searchForm').submit();">
+        🔄 {{ t('update_now') }}
+    </button>
+</div>
+
+<!-- ROUTE RESULT -->
+{% if route %}
+<div class="route-box">
+    <h2>✅ {{ t('recommended') }}</h2>
+    <ol class="route-list">
+        {% for place in route %}
+        <li>📍 {{ place }}</li>
+        {% endfor %}
+    </ol>
+
+    {% if route_edges %}
+    {{ weighted_graph(route_edges, "🕸️ " ~ t('wg_rec')) }}
+    {% endif %}
+
+    {% if shelter %}
+    <div class="distance">
+        🏠 {{ t('assigned_shelter') }}: {{ shelter.name }}
+        ({{ t('places_free', free=shelter.available(), cap=shelter.capacity) }})
+    </div>
+    <form method="POST" action="/confirm_evacuation">
+        <input type="hidden" name="shelter" value="{{ shelter.name }}">
+        <input type="hidden" name="people" value="{{ people }}">
+        <button class="search-btn" type="submit"
+                style="margin-top:15px;background:#16a34a;">
+            ✅ {{ t('confirm_send', n=people) }}
+        </button>
+    </form>
+    {% endif %}
+
+    {% if distance is not none %}
+    <div class="distance">
+        📏 {{ t('distance') }}: {{ "%.2f"|format(distance) }} km
+    </div>
+    {% endif %}
+
+    {% if route_risk is not none %}
+    <div class="distance">
+        ⚠️ {{ t('risk_score') }}: {{ route_risk }} ({{ t(risk_label) }})
+    </div>
+    {% endif %}
+
+    {% if eta %}
+    <div style="margin-top:15px;">
+        <h3 style="margin:0 0 10px;color:#38bdf8;font-size:16px;">⏱️ {{ t('eta_title') }}</h3>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:130px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;text-align:center;">
+                <div style="font-size:22px;font-weight:bold;color:#38bdf8;">🚗 {{ eta.formatted.car }}</div>
+                <div style="font-size:13px;color:#94a3b8;margin-top:4px;">{{ t('eta_car') }}</div>
+            </div>
+            <div style="flex:1;min-width:130px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;text-align:center;">
+                <div style="font-size:22px;font-weight:bold;color:#22c55e;">🚶 {{ eta.formatted.walk }}</div>
+                <div style="font-size:13px;color:#94a3b8;margin-top:4px;">{{ t('eta_walk') }}</div>
+            </div>
+            <div style="flex:1;min-width:130px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;text-align:center;">
+                <div style="font-size:22px;font-weight:bold;color:#f59e0b;">🚛 {{ eta.formatted.truck }}</div>
+                <div style="font-size:13px;color:#94a3b8;margin-top:4px;">{{ t('eta_truck') }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- EXPORT & SHARE BUTTONS -->
+    <div class="no-print" style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button type="button" class="search-btn" style="background:#334155;padding:10px 18px;font-size:14px;"
+                onclick="window.print();">
+            {{ t('print_btn') }}
+        </button>
+        <button type="button" class="search-btn" style="background:#16a34a;color:white;padding:10px 18px;font-size:14px;"
+                onclick="shareWhatsApp();">
+            {{ t('share_wa') }}
+        </button>
+        <button type="button" class="search-btn" style="background:#0284c7;padding:10px 18px;font-size:14px;"
+                onclick="copyRouteText();">
+            {{ t('copy_btn') }}
+        </button>
+    </div>
+
+    {% if alt_route %}
+    <div style="margin-top:20px;padding:15px;background:#0f172a;
+                border:1px dashed #f59e0b;border-radius:8px;">
+        <h3 style="margin:0 0 10px;color:#f59e0b;">🟠 {{ t('alt_route') }}</h3>
+        <div style="color:#cbd5e1;">{{ alt_route|join(' → ') }}</div>
+        <div style="margin-top:10px;color:#38bdf8;font-weight:bold;">
+            📏 {{ "%.2f"|format(alt_distance) }} km
+            &nbsp;|&nbsp;
+            ⚠️ {{ t('risk') }} {{ alt_risk }} ({{ t(alt_risk_label) }})
+        </div>
+        {% if alt_edges %}
+        {{ weighted_graph(alt_edges, "🕸️ " ~ t('wg_alt')) }}
+        {% endif %}
+    </div>
+    {% elif route %}
+    <p style="color:#94a3b8;margin-top:15px;">
+        {{ t('no_alt') }}
+    </p>
+    {% endif %}
+
+    {% if compare %}
+    <div style="margin-top:20px;padding:15px;background:#0f172a;
+                border:1px solid #334155;border-radius:8px;">
+        <h3 style="margin:0 0 10px;color:#38bdf8;">⚖️ {{ t('cmp_title') }}</h3>
+        {% if compare.same %}
+        <p style="color:#22c55e;margin:0;">
+            {{ t('cmp_same') }}
+        </p>
+        {% else %}
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;color:#e2e8f0;">
+            <tr style="color:#94a3b8;text-align:left;">
+                <th></th>
+                <th style="padding:6px;">🟢 {{ t('cmp_safest') }}</th>
+                <th style="padding:6px;">🔵 {{ t('cmp_shortest') }}</th>
+            </tr>
+            <tr>
+                <td style="padding:6px;color:#94a3b8;">{{ t('distance') }}</td>
+                <td style="padding:6px;">{{ "%.2f"|format(compare.safest.km) }} km</td>
+                <td style="padding:6px;">{{ "%.2f"|format(compare.shortest.km) }} km</td>
+            </tr>
+            <tr>
+                <td style="padding:6px;color:#94a3b8;">{{ t('cmp_risk') }}</td>
+                <td style="padding:6px;">{{ compare.safest.risk }} ({{ t(compare.safest.label) }})</td>
+                <td style="padding:6px;color:#f87171;">{{ compare.shortest.risk }} ({{ t(compare.shortest.label) }})</td>
+            </tr>
+            <tr>
+                <td style="padding:6px;color:#94a3b8;">{{ t('cmp_stops') }}</td>
+                <td style="padding:6px;">{{ compare.safest.route|join(' → ') }}</td>
+                <td style="padding:6px;">{{ compare.shortest.route|join(' → ') }}</td>
+            </tr>
+        </table>
+        </div>
+        <p style="color:#94a3b8;margin:10px 0 0;">
+            {{ t('cmp_note') }}
+        </p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <p style="color:#94a3b8;margin-top:15px;">
+        {{ t('route_note') }}
+    </p>
+</div>
+{% endif %}
+
+<!-- MAP -->
+<div class="map-container">
+    <h2>🗺️ {{ t('map_title') }}</h2>
+    <div id="map"></div>
+    <div id="routingStatus">
+        {% if route %}
+        🛰️ {{ t('map_drawing') }}
+        {% else %}
+        📍 {{ t('map_select') }}
+        {% endif %}
+    </div>
+
+    <label style="margin-top:12px;font-weight:normal;cursor:pointer;">
+        <input type="checkbox" id="networkToggle">
+        {{ t('show_roads') }}
+    </label>
+
+    <div class="legend">
+        <div class="legend-item">🔵 {{ t('start_loc') }}</div>
+        <div class="legend-item">🔴 {{ t('destination') }}</div>
+        <div class="legend-item">🟢 {{ t('leg_safe') }}</div>
+        <div class="legend-item">🟠 {{ t('leg_alt') }}</div>
+        <div class="legend-item">🏠 {{ t('leg_shelter') }}</div>
+        <div class="legend-item">⚫ {{ t('leg_dotted') }}</div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><b>{{ t('leg_level') }}</b></div>
+        <div class="legend-item"><span style="color:#22c55e;">▬</span> {{ t('low') }}</div>
+        <div class="legend-item"><span style="color:#f59e0b;">▬</span> {{ t('medium') }}</div>
+        <div class="legend-item"><span style="color:#ef4444;">▬</span> {{ t('high') }}</div>
+        <div class="legend-item"><span style="color:#a855f7;">▬</span> {{ t('submerged') }}</div>
+        <div class="legend-item"><span style="color:#9ca3af;">┅</span> {{ t('blocked') }}</div>
+        <div class="legend-item">🏷️ {{ t('leg_weight') }}</div>
+    </div>
+</div>
+
+<!-- ROAD STATUS TABLE -->
+<div class="road-box">
+    <h2>🚧 {{ t('road_status_title') }}</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>{{ t('th_road') }}</th>
+                <th>{{ t('th_start') }}</th>
+                <th>{{ t('th_end') }}</th>
+                <th>{{ t('th_km') }}</th>
+                <th>{{ t('th_flood') }}</th>
+                <th>{{ t('th_status') }}</th>
+                <th>{{ t('th_weight') }}</th>   <!-- NEW -->
+            </tr>
+        </thead>
+        <tbody>
+        {% if road_statuses %}
+            {% for road in road_statuses %}
+            <tr>
+                <td>{{ road[0] }}</td>
+                <td>{{ road[1] }}</td>
+                <td>{{ road[2] }}</td>
+                <td>{{ road[3] }}</td>
+                <td class="{{ road[4]|lower }}">{{ t(road[4]|lower) }}</td>
+                <td class="{{ road[5]|lower }}">{{ t(road[5]|lower) }}</td>
+                <!-- NEW: weight = distance + flood penalty -->
+                <td>
+                    {% set pen = {'low': 0, 'medium': 10, 'high': 50, 'submerged': 1000} %}
+                    {% set lvl = road[4]|lower %}
+                    {% if road[5]|lower == 'blocked' or lvl == 'submerged' %}
+                        ✖
+                    {% else %}
+                        {{ "%.1f"|format(road[3]|float + pen[lvl]) }}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="7">{{ t('no_roads') }}</td>
+            </tr>
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<div class="road-box">
+    <h2>⚠️ {{ t('hazard_title') }}</h2>
+    <table>
+        <thead>
+            <tr><th>{{ t('th_place') }}</th><th>{{ t('th_type') }}</th><th>{{ t('th_risk_cap') }}</th></tr>
+        </thead>
+        <tbody>
+        {% for z in zones %}
+            <tr>
+                <td>{{ z.name }}</td>
+                <td>{{ t('hazard_zone') }}</td>
+                <td class="{{ z.risk_level() }}">{{ t(z.risk_level()) }}</td>
+            </tr>
+        {% endfor %}
+        {% for sh in shelters %}
+            <tr>
+                <td>{{ sh.name }}</td>
+                <td>{{ t('shelter') }}</td>
+                <td class="{{ 'high' if sh.is_full() else 'low' }}">
+                    {{ t('occupied_of', occ=sh.occupied, cap=sh.capacity, free=sh.available()) }}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>{{ t('title') }} © 2026</footer>
+
+<script>
+/* =========================================================
+   LOCATION COORDINATES
+========================================================= */
+var locations = {{ coords|tojson }};
+
+/* =========================================================
+   SELECTED LOCATIONS FROM FLASK
+========================================================= */
+var selectedSource = {{ request.form.get('source')|tojson }};
+var selectedDestination = {{ resolved_destination|tojson }};
+
+/* =========================================================
+   CREATE MAP
+========================================================= */
+var map = L.map("map").setView([15.4810, 78.4850], 15);
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+/* =========================================================
+   START LOCATION
+========================================================= */
+if (selectedSource && locations[selectedSource]) {
+    var startMarker = L.circleMarker(locations[selectedSource], {
+        radius: 9,
+        color: "#ffffff",
+        weight: 3,
+        fillColor: "#2563eb",
+        fillOpacity: 1
+    }).addTo(map);
+
+    startMarker.bindTooltip(
+        "🔵 YOU ARE HERE<br><b>" + selectedSource + "</b>",
+        { permanent: true, direction: "top",
+          className: "start-label", offset: [0, -10] }
+    );
+    startMarker.bindPopup("<b>🔵 Starting Location</b><br>" + selectedSource);
+}
+
+/* =========================================================
+   DESTINATION
+========================================================= */
+if (selectedDestination && locations[selectedDestination]) {
+    var destinationMarker = L.circleMarker(locations[selectedDestination], {
+        radius: 9,
+        color: "#ffffff",
+        weight: 3,
+        fillColor: "#dc2626",
+        fillOpacity: 1
+    }).addTo(map);
+
+    destinationMarker.bindTooltip(
+        "🔴 DESTINATION<br><b>" + selectedDestination + "</b>",
+        { permanent: true, direction: "top",
+          className: "destination-label", offset: [0, -10] }
+    );
+    destinationMarker.bindPopup("<b>🔴 Destination</b><br>" + selectedDestination);
+}
+
+/* =========================================================
+   OSRM REAL ROAD ROUTING
+========================================================= */
+async function getRealRoadGeometry(start, end) {
+    var startCoord = locations[start];
+    var endCoord = locations[end];
+    if (!startCoord || !endCoord) { return null; }
+
+    /* Leaflet = lat,lon   OSRM = lon,lat */
+    var url =
+        "https://router.project-osrm.org/route/v1/driving/" +
+        startCoord[1] + "," + startCoord[0] + ";" +
+        endCoord[1] + "," + endCoord[0] +
+        "?overview=full&geometries=geojson";
+
+    try {
+        var response = await fetch(url);
+        if (!response.ok) { throw new Error("OSRM request failed"); }
+        var data = await response.json();
+        if (data.code !== "Ok" || !data.routes || data.routes.length === 0) {
+            return null;
+        }
+        return {
+            km: data.routes[0].distance / 1000,
+            coords: data.routes[0].geometry.coordinates.map(function(point) {
+                return [point[1], point[0]];
+            })
+        };
+    } catch (error) {
+        console.error("Road routing error:", error);
+        return null;
+    }
+}
+
+/* =========================================================
+   PLACE MARKERS (always visible)
+   Teal = shelter, grey = other location. Hover for the name.
+========================================================= */
+var shelterNames = {{ shelters|map(attribute='name')|list|tojson }};
+var markerLayer = L.layerGroup().addTo(map);
+var allPoints = [];
+
+Object.keys(locations).forEach(function(name) {
+    var isShelter = shelterNames.indexOf(name) !== -1;
+    var m = L.circleMarker(locations[name], {
+        radius: isShelter ? 8 : 6,
+        color: "#ffffff",
+        weight: 2,
+        fillColor: isShelter ? "#14b8a6" : "#cbd5e1",
+        fillOpacity: 1
+    }).addTo(markerLayer).bindTooltip((isShelter ? "🏠 " : "📍 ") + name);
+
+    var popupHtml = '<div style="color:#0f172a;min-width:170px;font-family:sans-serif;padding:3px;">' +
+        '<b style="font-size:13px;">' + (isShelter ? '🏠 Shelter: ' : '📍 Place: ') + name + '</b><br>' +
+        '<div style="margin-top:10px;display:flex;gap:6px;">' +
+        '<button type="button" onclick="setStart(\'' + name.replace(/'/g, "\\'") + '\')" style="flex:1;padding:5px 8px;font-size:11px;background:#0284c7;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Set Start</button>' +
+        '<button type="button" onclick="setDest(\'' + name.replace(/'/g, "\\'") + '\')" style="flex:1;padding:5px 8px;font-size:11px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Set Dest</button>' +
+        '</div></div>';
+    m.bindPopup(popupHtml);
+    allPoints.push(locations[name]);
+});
+
+/* =========================================================
+   REAL-ROAD SHAPES (cached, straight-line fallback)
+========================================================= */
+var geomCache = {};
+var kmCache = {};
+
+async function getSegment(a, b) {
+    var key = a + "|" + b;
+    if (!(key in geomCache)) {
+        var res = await getRealRoadGeometry(a, b);
+        geomCache[key] = res ? res.coords : null;
+        kmCache[key] = res ? res.km : null;
+    }
+    var g = geomCache[key];
+    if (g && g.length > 1) { return g.slice(); }
+    return [locations[a], locations[b]];      /* fallback */
+}
+
+async function buildPath(names) {
+    var coords = [];
+    var fallback = false;
+    for (var i = 0; i < names.length - 1; i++) {
+        var seg = await getSegment(names[i], names[i + 1]);
+        if (!geomCache[names[i] + "|" + names[i + 1]]) { fallback = true; }
+        if (coords.length > 0) { seg.shift(); }   /* drop duplicate joint */
+        coords = coords.concat(seg);
+    }
+    return { coords: coords, fallback: fallback };
+}
+
+/* ---------- ROUTING MISMATCH CHECK ----------
+   The algorithm (models.py) picks the stops using flood penalties and
+   blocked roads. OSRM only draws the shape between two stops and knows
+   nothing about floods. If OSRM's distance for a leg is very different
+   from the graph's distance_km, the drawing is not the same road. */
+var ROUTE_EDGES = {{ route_edges|tojson }};
+var ALT_EDGES = {{ alt_edges|tojson }};
+var MISMATCH_RATIO = 1.5;
+
+function findMismatches(edges) {
+    var bad = [];
+    (edges || []).forEach(function(e) {
+        var km = kmCache[e.from + "|" + e.to];
+        if (km === null || km === undefined) { return; }
+        var ratio = km / e.distance;
+        if (ratio > MISMATCH_RATIO) {
+            bad.push(e.from + " → " + e.to + ": graph " +
+                     e.distance.toFixed(1) + " km, map road " +
+                     km.toFixed(1) + " km");
+        }
+    });
+    return bad;
+}
+
+var FLOOD_COLORS = {
+    low: "#22c55e",
+    medium: "#f59e0b",
+    high: "#ef4444",
+    submerged: "#a855f7"
+};
+
+var routeLine = null;
+var ROUTE_OK =
+    "✅ Green line = route computed by the algorithm, " +
+    "drawn along the real roads between its stops.";
+var ROUTE_FALLBACK =
+    "⚠️ Real road shapes could not be loaded for part of " +
+    "the route, so a straight line is shown there. " +
+    "The stops themselves are still correct.";
+
+/* =========================================================
+   DRAW THE COMPUTED ROUTES
+========================================================= */
+async function drawRoutes() {
+    var status = document.getElementById("routingStatus");
+    var fallback = false;
+
+{% if route %}
+    var selectedRoute = [
+{% for place in route %}
+        {{ place|tojson }}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    ];
+    var path = await buildPath(selectedRoute);
+    fallback = fallback || path.fallback;
+
+    routeLine = L.polyline(path.coords, {
+        color: "#16ff00",
+        weight: 8,
+        opacity: 1,
+        lineCap: "round",
+        lineJoin: "round"
+    }).addTo(map);
+
+    routeLine.bindPopup(
+        "🟢 Recommended Flood-Safe Route<br>" +
+        "Flood risk score: {{ route_risk }}"
+    );
+    /* exact path chosen by the algorithm: stop to stop */
+    L.polyline(selectedRoute.map(function(n) { return locations[n]; }), {
+        color: "#111827", weight: 2, dashArray: "2, 6", opacity: 1
+    }).addTo(map).bindPopup("Algorithm path (stop to stop)");
+    map.fitBounds(routeLine.getBounds(), { padding: [70, 70] });
+{% endif %}
+
+{% if alt_route %}
+    var alternativeRoute = [
+{% for place in alt_route %}
+        {{ place|tojson }}{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    ];
+    var altPath = await buildPath(alternativeRoute);
+    fallback = fallback || altPath.fallback;
+
+    L.polyline(altPath.coords, {
+        color: "#f59e0b",
+        weight: 5,
+        opacity: 0.9,
+        dashArray: "10, 10"
+    }).addTo(map).bindPopup("🟠 Alternative Route");
+{% endif %}
+
+{% if route %}
+    routeLine.bringToFront();
+    var mism = findMismatches(ROUTE_EDGES).concat(findMismatches(ALT_EDGES));
+    var msg = fallback ? ROUTE_FALLBACK : ROUTE_OK;
+    if (mism.length) {
+        msg += "\n\n⚠️ The drawn road differs a lot from the algorithm's " +
+               "distance on:\n• " + mism.join("\n• ") +
+               "\nFollow the dotted black line (the algorithm's stops). " +
+               "The road shape is only a drawing and may use a road " +
+               "marked flooded or blocked.";
+    }
+    status.style.whiteSpace = "pre-line";
+    status.innerText = msg;
+{% else %}
+    if (allPoints.length) {
+        map.fitBounds(L.latLngBounds(allPoints), { padding: [40, 40] });
+    }
+{% endif %}
+
+    if (typeof startMarker !== "undefined" && startMarker) {
+        startMarker.bringToFront();
+    }
+    if (typeof destinationMarker !== "undefined" && destinationMarker) {
+        destinationMarker.bringToFront();
+    }
+}
+drawRoutes();
+
+/* =========================================================
+   OPTIONAL: FLOOD-COLORED ROAD NETWORK WITH WEIGHTS
+   Off by default. Each road is drawn along its real shape,
+   colored by flood level, with its graph weight written on it.
+   Grey dashed = blocked.  ✖ = blocked/submerged (not in graph).
+   roadData item:
+   [start, end, floodLevel, status, roadName, distanceKm]
+========================================================= */
+var roadData = [
+{% for r in road_statuses %}
+    [{{ r[1]|tojson }}, {{ r[2]|tojson }}, {{ r[4]|tojson }}, {{ r[5]|tojson }}, {{ r[0]|tojson }}, {{ r[3]|float }}]{% if not loop.last %},{% endif %}
+
+{% endfor %}
+];
+
+/* same penalties as Road.FLOOD_PENALTY in models.py */
+var PENALTY = { low: 0, medium: 10, high: 50, submerged: 1000 };
+
+var roadsLayer = L.layerGroup();
+var roadsStarted = false;
+
+document.getElementById("networkToggle").addEventListener(
+    "change",
+    async function() {
+        var status = document.getElementById("routingStatus");
+
+        if (!this.checked) {
+            map.removeLayer(roadsLayer);
+            return;
+        }
+        roadsLayer.addTo(map);
+        if (roadsStarted) { return; }
+        roadsStarted = true;
+        status.innerText = "🛰️ Loading road network...";
+
+        for (var i = 0; i < roadData.length; i++) {
+            var r = roadData[i];
+            if (!locations[r[0]] || !locations[r[1]]) { continue; }
+
+            var seg = await getSegment(r[0], r[1]);
+            var flood = String(r[2] || "low").toLowerCase();
+            var blocked = String(r[3] || "").toLowerCase() === "blocked";
+
+            L.polyline(seg, {
+                color: blocked ? "#9ca3af" : (FLOOD_COLORS[flood] || "#22c55e"),
+                weight: 4,
+                opacity: 0.8,
+                dashArray: blocked ? "4, 8" : null
+            }).addTo(roadsLayer).bindPopup(
+                "<b>" + r[4] + "</b><br>" +
+                "Flood: " + flood.toUpperCase() + "<br>" +
+                "Status: " + String(r[3] || "").toUpperCase()
+            );
+
+            /* weight label in the middle of the road (NEW) */
+            var unusable = blocked || flood === "submerged";
+            var w = unusable ? "✖" : (r[5] + (PENALTY[flood] || 0)).toFixed(1);
+            var mid = seg[Math.floor(seg.length / 2)];
+            L.marker(mid, {
+                icon: L.divIcon({
+                    className: "weight-label",
+                    html: w,
+                    iconSize: [40, 20]
+                })
+            }).addTo(roadsLayer);
+        }
+
+        if (routeLine) { routeLine.bringToFront(); }
+        status.innerText = "✅ Road network loaded (colored by flood level, weights shown).";
+    }
+);
+
+/* =========================================================
+   LIVE UPDATES
+   Every 15 seconds the page asks /api/status for a fingerprint
+   of all roads and shelters. If it changed:
+     - a route is on screen  -> show a warning with an
+                                "Update route now" button
+     - nothing on screen yet -> reload the page quietly
+========================================================= */
+var POLL_MS = 15000;
+var lastVersion = null;
+var showingResult = {{ 'true' if request.method == 'POST' else 'false' }};
+
+function onConditionsChanged() {
+    if (showingResult) {
+        document.getElementById("changeBanner").style.display = "block";
+        document.getElementById("changeBanner").scrollIntoView(
+            { behavior: "smooth", block: "center" });
+    } else {
+        window.location.reload();
+    }
+}
+
+async function checkForChanges() {
+    if (document.hidden) { return; }          /* tab not visible */
+    var bar = document.getElementById("liveBar");
+    try {
+        var res = await fetch("/api/status", { cache: "no-store" });
+        var data = await res.json();
+        if (!data.ok) { throw new Error(data.error || "bad response"); }
+
+        bar.innerText = "🟢 Live updates ON · last checked " +
+                        new Date().toLocaleTimeString();
+        if (lastVersion === null) {
+            lastVersion = data.version;       /* first check = baseline */
+        } else if (data.version !== lastVersion) {
+            lastVersion = data.version;
+            onConditionsChanged();
+        }
+    } catch (err) {
+        bar.innerText = "🔴 Connection lost · retrying...";
+    }
+}
+setInterval(checkForChanges, POLL_MS);
+checkForChanges();
+
+/* =========================================================
+   CLICK-TO-ROUTE & EMERGENCY SHARING HELPERS
+========================================================= */
+function setStart(place) {
+    var sel = document.querySelector('select[name="source"]');
+    if (sel) { sel.value = place; }
+    document.getElementById('searchForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function setDest(place) {
+    var sel = document.querySelector('select[name="destination"]');
+    if (sel) { sel.value = place; }
+    document.getElementById('searchForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function shareWhatsApp() {
+    var text = '🚨 EMERGENCY FLOOD EVACUATION GUIDANCE\n' +
+        'From: {{ route[0] if route else "" }}\n' +
+        'To: {{ resolved_destination or "" }}\n' +
+        'Distance: {{ "%.2f"|format(distance) if distance else "" }} km\n' +
+        'ETA (Car): {{ eta.formatted.car if eta else "" }} | (Rescue Truck): {{ eta.formatted.truck if eta else "" }}\n' +
+        'Safe Path: {{ route|join(" ➔ ") if route else "" }}\n' +
+        '⚠️ Flood Risk Score: {{ route_risk }} ({{ t(risk_label) if risk_label else "" }})';
+    var url = 'https://wa.me/?text=' + encodeURIComponent(text);
+    window.open(url, '_blank');
+}
+
+function copyRouteText() {
+    var text = 'EMERGENCY FLOOD EVACUATION GUIDANCE:\n' +
+        'From: {{ route[0] if route else "" }}\n' +
+        'To: {{ resolved_destination or "" }}\n' +
+        'Distance: {{ "%.2f"|format(distance) if distance else "" }} km\n' +
+        'ETA: Car {{ eta.formatted.car if eta else "" }}, Truck {{ eta.formatted.truck if eta else "" }}, Walk {{ eta.formatted.walk if eta else "" }}\n' +
+        'Path: {{ route|join(" ➔ ") if route else "" }}';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+            alert('✅ Evacuation route guidance copied to clipboard!');
+        });
+    } else {
+        alert(text);
+    }
+}
+
+/* =========================================================
+   FIX MAP SIZE
+========================================================= */
+setTimeout(function() { map.invalidateSize(); }, 1000);
+</script>
+</body>
+</html>
+
