@@ -1,4 +1,3 @@
-
 from flask import (Flask, render_template, request, redirect, url_for,
                    session, jsonify)
 from functools import wraps
@@ -16,6 +15,7 @@ except ImportError:
 from models import Road, RoadNetwork, Shelter
 from data_loader import load_data
 from translations import LANGS, translate
+from voice import build_script, no_route_script
 
 TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 app = Flask(__name__, template_folder=TEMPLATES_DIR)
@@ -831,6 +831,68 @@ def api_simulate():
 
 
 # ---------------------------------------------------------
+# VOICE GUIDANCE (text that the browser reads aloud)
+# ---------------------------------------------------------
+@app.route("/api/voice", methods=["GET"])
+def api_voice():
+    """Spoken route guidance in the page language (or ?lang=en|te|hi).
+    Parameters: source (required), destination (default AUTO),
+    people (default 1), surge (default 0)."""
+    lang = request.args.get("lang")
+    if lang not in LANGS:
+        lang = current_lang()
+
+    source = request.args.get("source")
+    destination = request.args.get("destination", "AUTO") or "AUTO"
+    try:
+        people = max(int(request.args.get("people", 1)), 1)
+    except (ValueError, TypeError):
+        people = 1
+    try:
+        surge = float(request.args.get("surge", 0.0))
+    except (ValueError, TypeError):
+        surge = 0.0
+
+    if not source or source not in COORDS:
+        script = no_route_script(lang)
+        script.update({"ok": False, "error": "Unknown or missing 'source'."})
+        return jsonify(script), 400
+
+    try:
+        network = load_network()
+        if surge > 0:
+            network = network.simulate_surge(surge)
+        graph = network.build_graph()
+
+        if destination == "AUTO":
+            shelter, route, distance = network.find_nearest_shelter(
+                source, people, graph)
+        else:
+            target = network.shelters.get(destination)
+            if target is not None and not target.can_fit(people):
+                route, distance = None, None
+            else:
+                route, distance = network.find_route(
+                    source, destination, graph)
+
+        if not route:
+            script = no_route_script(lang)
+            script["ok"] = False
+            return jsonify(script), 404
+
+        script = build_script(
+            lang, route, distance,
+            network.route_eta(route, graph),
+            network.risk_label(network.route_risk(route, graph)),
+            route_edges(route, graph))
+        script["ok"] = True
+        script["route"] = route
+        return jsonify(script)
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+# ---------------------------------------------------------
 # HOME PAGE
 # ---------------------------------------------------------
 @app.route("/", methods=["GET", "POST"])
@@ -979,6 +1041,8 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
+
 
 
 
