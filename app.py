@@ -35,6 +35,7 @@ DATA = load_data(DATA_FILE)
 
 COORDS = DATA["locations"]                  # name -> [lat, lon]
 SHELTER_INFO = DATA["shelters"]             # name -> capacity (people)
+SHELTER_OCCUPANCY = DATA.get("shelter_occupancy", {})  # name -> occupied (people)
 SHELTERS = tuple(SHELTER_INFO.keys())
 ZONE_POPULATION = DATA["zone_population"]   # name -> people
 SAMPLE_ROADS = [
@@ -116,11 +117,14 @@ def initialize_database():
             )
         """)
         for name, cap in SHELTER_INFO.items():
+            init_occ = SHELTER_OCCUPANCY.get(name, 0)
             cur.execute("""
                 INSERT INTO shelters (name, capacity, occupied)
-                VALUES (?, ?, 0)
-                ON CONFLICT (name) DO NOTHING
-            """, (name, cap))
+                VALUES (?, ?, ?)
+                ON CONFLICT (name) DO UPDATE SET
+                    capacity = excluded.capacity,
+                    occupied = CASE WHEN shelters.occupied = 0 AND ? > 0 THEN ? ELSE shelters.occupied END
+            """, (name, cap, init_occ, init_occ, init_occ))
 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS zones (
@@ -137,6 +141,8 @@ def initialize_database():
                 VALUES (?, ?, ?, 0, 0)
                 ON CONFLICT (name) DO NOTHING
             """, (name, people, people))
+
+        cur.execute("DELETE FROM zones WHERE name IN (SELECT name FROM shelters)")
 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS road_history (
@@ -177,11 +183,14 @@ def initialize_database():
             )
         """)
         for name, cap in SHELTER_INFO.items():
-            cur.execute("""
+            init_occ = SHELTER_OCCUPANCY.get(name, 0)
+            execute_sql(cur, """
                 INSERT INTO shelters (name, capacity, occupied)
-                VALUES (%s, %s, 0)
-                ON CONFLICT (name) DO NOTHING
-            """, (name, cap))
+                VALUES (%s, %s, %s)
+                ON CONFLICT (name) DO UPDATE SET
+                    capacity = EXCLUDED.capacity,
+                    occupied = CASE WHEN shelters.occupied = 0 AND %s > 0 THEN %s ELSE shelters.occupied END
+            """, (name, cap, init_occ, init_occ, init_occ))
 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS zones (
@@ -196,6 +205,8 @@ def initialize_database():
                 VALUES (%s, %s, %s)
                 ON CONFLICT (name) DO NOTHING
             """, (name, people, people))
+
+        execute_sql(cur, "DELETE FROM zones WHERE name IN (SELECT name FROM shelters)")
 
         cur.execute("""
             ALTER TABLE zones
@@ -524,6 +535,33 @@ def reset_shelters():
             msg="All shelters emptied and zone populations restored"))
     except Exception as e:
         return redirect(url_for("admin", err=str(e)))
+
+
+@app.route("/update_shelter", methods=["POST"])
+@admin_required
+def update_shelter():
+    """Authority adjusts shelter capacity or current occupied persons."""
+    name = request.form.get("name")
+    try:
+        capacity = int(request.form.get("capacity", 0))
+        occupied = int(request.form.get("occupied", 0))
+        if capacity <= 0:
+            raise ValueError("Capacity must be greater than 0")
+        if occupied < 0:
+            raise ValueError("Occupied count cannot be negative")
+        if occupied > capacity:
+            raise ValueError(f"Occupied ({occupied}) cannot exceed capacity ({capacity})")
+
+        conn = get_connection()
+        cur = conn.cursor()
+        execute_sql(cur, "UPDATE shelters SET capacity = %s, occupied = %s WHERE name = %s",
+                    (capacity, occupied, name))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return redirect(url_for("admin", msg=f"Updated shelter {name}: {occupied}/{capacity} occupied"))
+    except Exception as e:
+        return redirect(url_for("admin", err=f"Failed to update shelter: {e}"))
 
 
 @app.route("/update_population", methods=["POST"])
@@ -910,6 +948,7 @@ def home():
     route_edge_list = alt_edge_list = None
     eta = alt_eta = None
     compare = None
+    emergency_services = {"hospitals": [], "police_stations": []}
     message = request.args.get("done")
     if request.args.get("fail"):
         error = request.args.get("fail")
@@ -996,6 +1035,7 @@ def home():
                                 "label": network.risk_label(short_risk),
                                 "eta": network.route_eta(short_route, graph)},
                         }
+                    emergency_services = network.get_en_route_emergency_services(route, graph)
             except Exception as e:
                 error = "Route calculation error: " + str(e)
 
@@ -1036,6 +1076,9 @@ def home():
         route_edges=route_edge_list,
         alt_edges=alt_edge_list,
         compare=compare,
+        emergency_services=emergency_services,
+        hospitals=list(RoadNetwork.HOSPITALS),
+        police_stations=list(RoadNetwork.POLICE_STATIONS),
     )
 
 

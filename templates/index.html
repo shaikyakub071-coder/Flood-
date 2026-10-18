@@ -5,203 +5,605 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ t('title') }}</title>
 
-    <!-- LEAFLET -->
+    <!-- GOOGLE FONTS & LEAFLET -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        /* ---------- GENERAL ---------- */
+        /* ---------- DESIGN TOKENS ---------- */
+        :root {
+            --bg-base: #0b1120;
+            --bg-card: rgba(17, 28, 51, 0.90);
+            --bg-card-inner: #0f172a;
+            --border-subtle: rgba(56, 189, 248, 0.20);
+            --border-glow: rgba(56, 189, 248, 0.45);
+            --primary: #0284c7;
+            --primary-hover: #0369a1;
+            --accent-cyan: #38bdf8;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #ef4444;
+            --accent-purple: #a855f7;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
         * { box-sizing: border-box; }
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #0f172a;
-            color: white;
+            font-family: var(--font-sans);
+            background: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(14, 165, 233, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.05) 0%, transparent 40%);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
         }
 
         /* ---------- HEADER ---------- */
         .header {
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            padding: 25px;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(11, 17, 32, 0.9));
+            backdrop-filter: blur(12px);
+            padding: 30px 20px 24px;
             text-align: center;
-            border-bottom: 2px solid #334155;
+            border-bottom: 1px solid var(--border-subtle);
+            box-shadow: 0 4px 25px rgba(0,0,0,0.4);
+            position: relative;
         }
-        .header h1 { margin: 0; color: #38bdf8; font-size: 32px; }
-        .header p { color: #cbd5e1; margin-top: 8px; }
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        .header-badge span.pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-emerald);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px var(--accent-emerald);
+        }
+        .header h1 {
+            margin: 0;
+            color: var(--text-main);
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        .header p { color: var(--text-muted); margin-top: 8px; font-size: 15px; }
+        .header-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+        .header-nav a {
+            color: var(--accent-cyan);
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 14px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .header-nav a:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(2, 132, 199, 0.4);
+        }
+        .lang-pill-group {
+            display: inline-flex;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 3px 6px;
+            gap: 4px;
+            margin-top: 12px;
+        }
+        .lang-pill {
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 14px;
+            transition: all 0.2s ease;
+        }
+        .lang-pill.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 0 10px rgba(2, 132, 199, 0.4);
+        }
+        .lang-pill.inactive {
+            color: var(--text-muted);
+        }
+        .lang-pill.inactive:hover {
+            color: white;
+        }
+
         .container { width: 95%; max-width: 1400px; margin: 25px auto; }
+
+        /* ---------- HUD METRICS GRID ---------- */
+        .hud-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+        .hud-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            transition: all 0.25s ease;
+        }
+        .hud-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(56, 189, 248, 0.15);
+        }
+        .hud-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .hud-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+        }
+        .hud-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-top: 3px;
+        }
 
         /* ---------- SEARCH BOX ---------- */
         .search-box {
-            background: #1e293b;
-            padding: 25px;
-            border-radius: 12px;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            padding: 28px;
+            border-radius: 14px;
             margin-bottom: 25px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
         }
-        .search-box h2 { margin-top: 0; color: #38bdf8; }
+        .search-box h2 {
+            margin-top: 0;
+            color: var(--accent-cyan);
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .quick-chips {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .quick-chip-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .chip {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            color: #bae6fd;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: var(--font-sans);
+        }
+        .chip:hover {
+            background: rgba(2, 132, 199, 0.3);
+            border-color: var(--accent-cyan);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
         .form-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: end; }
         .form-group { flex: 1; min-width: 250px; }
-        label { display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: bold; }
-        select {
+        label { display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: 600; font-size: 14px; }
+        select, input[type="number"], input[type="text"] {
             width: 100%;
-            padding: 12px;
-            border-radius: 7px;
-            border: 1px solid #475569;
-            background: #0f172a;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: var(--bg-card-inner);
             color: white;
             font-size: 15px;
+            font-family: var(--font-sans);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+        select:focus, input[type="number"]:focus, input[type="text"]:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
         }
         .search-btn {
-            padding: 12px 25px;
-            background: #0284c7;
+            padding: 12px 26px;
+            background: linear-gradient(135deg, #0284c7, #0369a1);
             color: white;
             border: none;
-            border-radius: 7px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .search-btn:hover { background: #0369a1; }
-
-        /* ---------- ERROR ---------- */
-        .error {
-            background: #7f1d1d;
-            color: #fecaca;
-            padding: 15px;
             border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3);
+            font-family: var(--font-sans);
+        }
+        .search-btn:hover {
+            background: linear-gradient(135deg, #0369a1, #075985);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.4);
+        }
+
+        /* ---------- ERROR & ALERTS ---------- */
+        .error {
+            background: rgba(127, 29, 29, 0.85);
+            backdrop-filter: blur(8px);
+            color: #fecaca;
+            padding: 16px 20px;
+            border-radius: 10px;
+            border: 1px solid #ef4444;
             margin-bottom: 20px;
+            font-weight: 600;
         }
 
         /* ---------- ROUTE RESULT ---------- */
         .route-box {
-            background: #1e293b;
-            padding: 25px;
-            border-radius: 12px;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            padding: 28px;
+            border-radius: 14px;
             margin-bottom: 25px;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
         }
-        .route-box h2 { color: #22c55e; margin-top: 0; }
-        .route-list { padding-left: 25px; }
+        .route-box h2 {
+            color: #4ade80;
+            margin-top: 0;
+            font-size: 22px;
+            font-weight: 800;
+        }
+        .route-list {
+            padding-left: 0;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 15px;
+        }
         .route-list li {
-            padding: 10px;
-            margin-bottom: 6px;
-            background: #334155;
-            border-radius: 5px;
+            padding: 12px 16px;
+            background: #1e293b;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-cyan);
+            font-weight: 600;
+            font-size: 15px;
         }
         .distance {
             margin-top: 15px;
-            padding: 15px;
-            background: #0f172a;
-            border-radius: 7px;
-            color: #38bdf8;
-            font-weight: bold;
-            font-size: 18px;
+            padding: 14px 18px;
+            background: var(--bg-card-inner);
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            color: var(--accent-cyan);
+            font-weight: 700;
+            font-size: 16px;
         }
 
-        /* ---------- WEIGHTED GRAPH OF A ROUTE (NEW) ---------- */
-        .wg { margin-top: 15px; padding: 15px; background: #0f172a;
-              border-radius: 8px; }
-        .wg h3 { margin: 0 0 12px; color: #38bdf8; }
-        .wg-node { padding: 10px 12px; background: #334155;
-                   border-radius: 20px; font-weight: bold; }
-        .wg-edge { display: flex; align-items: center; gap: 10px;
-                   flex-wrap: wrap; margin: 4px 0 4px 18px;
-                   padding-left: 12px; border-left: 3px solid #38bdf8; }
-        .wg-weight { background: #0284c7; color: white; padding: 4px 10px;
-                     border-radius: 6px; font-weight: bold; }
-        .wg-detail { color: #94a3b8; font-size: 13px; }
-        .wg-total { margin-top: 12px; color: #22c55e; font-weight: bold; }
+        /* ---------- WEIGHTED GRAPH OF A ROUTE ---------- */
+        .wg {
+            margin-top: 18px;
+            padding: 18px;
+            background: var(--bg-card-inner);
+            border-radius: 10px;
+            border: 1px solid var(--border-subtle);
+        }
+        .wg h3 { margin: 0 0 14px; color: var(--accent-cyan); font-size: 15px; }
+        .wg-node {
+            padding: 10px 14px;
+            background: #1e293b;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            display: inline-block;
+        }
+        .wg-edge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 6px 0 6px 20px;
+            padding-left: 14px;
+            border-left: 3px dashed var(--accent-cyan);
+        }
+        .wg-weight {
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 12px;
+            font-family: var(--font-mono);
+        }
+        .wg-detail { color: var(--text-muted); font-size: 13px; }
+        .wg-total {
+            margin-top: 14px;
+            color: #4ade80;
+            font-weight: 700;
+            font-size: 15px;
+            font-family: var(--font-mono);
+        }
 
         /* ---------- MAP ---------- */
         .map-container {
-            background: #1e293b;
-            padding: 20px;
-            border-radius: 12px;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            padding: 24px;
+            border-radius: 14px;
             margin-bottom: 25px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
         }
-        .map-container h2 { color: #38bdf8; margin-top: 0; }
+        .map-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .map-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .map-title-group h2 { margin: 0; color: var(--accent-cyan); font-size: 20px; font-weight: 700; }
+        .map-quick-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .map-btn {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #cbd5e1;
+            padding: 7px 13px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            font-family: var(--font-sans);
+        }
+        .map-btn:hover {
+            background: #1e293b;
+            border-color: var(--accent-cyan);
+            color: white;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+        }
+
         #map {
             width: 100%;
-            height: 550px;
-            border-radius: 10px;
-            border: 2px solid #475569;
+            height: 560px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
         }
-        #routingStatus { margin-top: 12px; color: #94a3b8; font-size: 14px; }
+        #routingStatus { margin-top: 14px; color: var(--text-muted); font-size: 14px; font-weight: 500; }
 
         /* ---------- START / DESTINATION LABELS ---------- */
         .start-label {
             background: #2563eb;
             color: white;
-            border: none;
+            border: 2px solid white;
             border-radius: 8px;
-            padding: 7px 10px;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            padding: 7px 11px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            font-family: var(--font-sans);
         }
         .destination-label {
             background: #dc2626;
             color: white;
-            border: none;
+            border: 2px solid white;
             border-radius: 8px;
-            padding: 7px 10px;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            padding: 7px 11px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            font-family: var(--font-sans);
         }
 
-        /* ---------- WEIGHT LABELS ON MAP (NEW) ---------- */
+        /* ---------- WEIGHT LABELS ON MAP ---------- */
         .weight-label {
             background: #0f172a;
             color: #ffffff;
             border: 1px solid #475569;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             text-align: center;
             line-height: 18px;
+            font-family: var(--font-mono);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        /* ---------- MAP POI BADGES ---------- */
+        .custom-poi-pin {
+            background: transparent !important;
+            border: none !important;
+        }
+        .poi-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            border: 2px solid #ffffff;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+            user-select: none;
+            cursor: pointer;
+        }
+        .poi-badge:hover {
+            transform: scale(1.22);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7);
+            z-index: 1000 !important;
+        }
+        .poi-hospital {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.75);
+        }
+        .poi-police {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            box-shadow: 0 0 12px rgba(2, 132, 199, 0.75);
+        }
+        .poi-shelter {
+            background: linear-gradient(135deg, #10b981, #047857);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.75);
+        }
+        .poi-generic {
+            width: 22px;
+            height: 22px;
+            font-size: 11px;
+            background: linear-gradient(135deg, #64748b, #334155);
+            border: 1.5px solid #ffffff;
         }
 
         /* ---------- LEGEND ---------- */
         .legend {
-            background: #1e293b;
-            padding: 15px;
+            background: var(--bg-card-inner);
+            padding: 14px 18px;
             margin-top: 15px;
-            border-radius: 8px;
+            border-radius: 10px;
             display: flex;
-            gap: 25px;
+            gap: 20px;
             flex-wrap: wrap;
+            border: 1px solid #334155;
+            align-items: center;
         }
-        .legend-item { color: #cbd5e1; }
+        .legend-item { color: #cbd5e1; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 
         /* ---------- ROAD TABLE ---------- */
         .road-box {
-            background: #1e293b;
-            padding: 20px;
-            border-radius: 12px;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            padding: 24px;
+            border-radius: 14px;
             overflow-x: auto;
             margin-bottom: 25px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
         }
-        .road-box h2 { color: #38bdf8; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { background: #334155; color: white; padding: 12px; }
-        td { padding: 12px; text-align: center; border-bottom: 1px solid #475569; }
+        .table-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .table-header-flex h2 { margin: 0; color: var(--accent-cyan); font-size: 20px; font-weight: 700; }
+        .table-search-wrap {
+            min-width: 280px;
+        }
+        .table-search-wrap input {
+            padding: 9px 14px;
+            font-size: 13px;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th {
+            background: #1e293b;
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px;
+            border-bottom: 2px solid #334155;
+        }
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #334155;
+            font-size: 14px;
+        }
+        tr:hover td { background: rgba(56, 189, 248, 0.04); }
 
-        /* ---------- STATUS COLORS ---------- */
-        .low { color: #22c55e; font-weight: bold; }
-        .medium { color: #f59e0b; font-weight: bold; }
-        .high { color: #ef4444; font-weight: bold; }
-        .blocked { color: #ef4444; font-weight: bold; }
-        .submerged { color: #a855f7; font-weight: bold; }
-        .open { color: #22c55e; font-weight: bold; }
+        /* ---------- STATUS PILL BADGES ---------- */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .low, .open { color: #34d399; font-weight: bold; }
+        .medium { color: #fbbf24; font-weight: bold; }
+        .high, .blocked { color: #f87171; font-weight: bold; }
+        .submerged { color: #c084fc; font-weight: bold; }
 
-        footer { text-align: center; padding: 25px; color: #94a3b8; }
+        footer { text-align: center; padding: 25px; color: #64748b; font-size: 13px; font-weight: 500; }
 
-        @media (max-width: 700px) {
+        @media (max-width: 768px) {
             .header h1 { font-size: 24px; }
-            #map { height: 450px; }
+            #map { height: 420px; }
+            .hud-grid { grid-template-columns: 1fr; }
         }
 
         @media print {
             body { background: white !important; color: black !important; }
-            .header, .search-box, .no-print, .filters, a.back, #liveBar, #changeBanner, .map-container, footer { display: none !important; }
+            .header, .search-box, .no-print, .filters, a.back, #liveBar, #changeBanner, .map-container, footer, .hud-grid { display: none !important; }
             .route-box { background: white !important; color: black !important; border: 2px solid #0f172a; box-shadow: none; padding: 20px !important; }
             .route-box h2 { color: #0f172a !important; }
             .distance, .wg, .wg-node, .wg-edge, li { background: #f1f5f9 !important; color: black !important; border: 1px solid #cbd5e1; }
@@ -238,31 +640,82 @@
 
 <!-- HEADER -->
 <div class="header">
+    <div class="header-badge">
+        <span class="pulse-dot"></span> REAL-TIME FLOOD DISASTER EVACUATION COMMAND
+    </div>
     <h1>🌊 {{ t('title') }}</h1>
     <p>{{ t('subtitle') }}</p>
-    <p>
-        <a href="/admin" style="color:#38bdf8;font-weight:bold;text-decoration:none;">
-            🛠️ {{ t('admin_link') }}
+    
+    <div class="header-nav">
+        <a href="/admin">🛠️ {{ t('admin_link') }}</a>
+        <a href="/evacuate-all">🚨 {{ t('evac_all_link') }}</a>
+    </div>
+
+    <div class="lang-pill-group">
+        {% for code, name in languages.items() %}
+        <a href="/lang/{{ code }}?next={{ request.path }}"
+           class="lang-pill {{ 'active' if code == lang else 'inactive' }}">
+            {{ name }}
         </a>
-        &nbsp;|&nbsp;
-        <a href="/evacuate-all" style="color:#38bdf8;font-weight:bold;text-decoration:none;">
-            🚨 {{ t('evac_all_link') }}
-        </a>
-    </p>
-<p style="font-size:14px;">
-        🌐 {% for code, name in languages.items() %}<a href="/lang/{{ code }}?next={{ request.path }}"
-           style="color:{{ '#ffffff' if code == lang else '#38bdf8' }};font-weight:bold;text-decoration:none;margin:0 6px;">{{ name }}</a>{% endfor %}
-    </p>
-    <p id="liveBar" style="font-size:14px;color:#94a3b8;">
+        {% endfor %}
+    </div>
+
+    <p id="liveBar" style="font-size:13px;color:#94a3b8;margin-top:12px;font-weight:500;">
         ⏳ Connecting to live updates...
     </p>
 </div>
 
 <div class="container">
 
+<!-- REAL-TIME COMMAND HUD -->
+<div class="hud-grid">
+    <div class="hud-card">
+        <div class="hud-icon" style="background:rgba(56,189,248,0.15);color:#38bdf8;">🛡️</div>
+        <div class="hud-data">
+            <div class="hud-value">{{ shelters|selectattr('available')|list|length }} / {{ shelters|length }}</div>
+            <div class="hud-label">{{ t('shelter') }}s Active</div>
+        </div>
+    </div>
+    <div class="hud-card">
+        <div class="hud-icon" style="background:rgba(16,185,129,0.15);color:#10b981;">👥</div>
+        <div class="hud-data">
+            {% set total_cap = shelters|sum(attribute='capacity') %}
+            {% set total_occ = shelters|sum(attribute='occupied') %}
+            <div class="hud-value">{{ total_cap - total_occ }}</div>
+            <div class="hud-label">Free Shelter Places</div>
+        </div>
+    </div>
+    <div class="hud-card">
+        <div class="hud-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b;">🌊</div>
+        <div class="hud-data">
+            <div class="hud-value">+{{ "%.1f"|format(surge) }}m</div>
+            <div class="hud-label">Kundu River Rise</div>
+        </div>
+    </div>
+    <div class="hud-card">
+        <div class="hud-icon" style="background:rgba(239,68,68,0.15);color:#ef4444;">🚧</div>
+        <div class="hud-data">
+            {% set usable_roads = road_statuses|selectattr(5, 'equalto', 'open')|rejectattr(4, 'equalto', 'submerged')|list|length %}
+            <div class="hud-value">{{ usable_roads }} / {{ road_statuses|length }}</div>
+            <div class="hud-label">Passable Roads</div>
+        </div>
+    </div>
+</div>
+
 <!-- SEARCH -->
 <div class="search-box">
     <h2>🚗 {{ t('find_route') }}</h2>
+
+    <!-- QUICK PRESETS CHIPS -->
+    <div class="quick-chips">
+        <span class="quick-chip-label">⚡ Quick Select:</span>
+        <button type="button" class="chip" onclick="setQuickStart('Kundu River Bank')">🌊 Kundu River Bank</button>
+        <button type="button" class="chip" onclick="setQuickStart('Government Hospital')">🏥 Govt Hospital</button>
+        <button type="button" class="chip" onclick="setQuickStart('Railway Station')">🚉 Railway Station</button>
+        <button type="button" class="chip" onclick="setQuickStart('Market Yard')">🏬 Market Yard</button>
+        <button type="button" class="chip" onclick="setQuickStart('Nandyal Bus Stand')">🚌 Bus Stand</button>
+    </div>
+
     <form method="POST" id="searchForm">
         <div class="form-row">
 
@@ -332,6 +785,9 @@
             </div>
         </div>
     </form>
+
+    <!-- VOICE ASSISTANT -->
+    {% include "voice_snippet.html" %}
 </div>
 
 <!-- ERROR / MESSAGE -->
@@ -421,6 +877,10 @@
 
     <!-- EXPORT & SHARE BUTTONS -->
     <div class="no-print" style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button type="button" class="search-btn" style="background:#16a34a;padding:10px 18px;font-size:14px;"
+                onclick="if(window.VoiceGuide){window.VoiceGuide.speakRoute();}">
+            {{ t('voice_speak') }}
+        </button>
         <button type="button" class="search-btn" style="background:#334155;padding:10px 18px;font-size:14px;"
                 onclick="window.print();">
             {{ t('print_btn') }}
@@ -495,6 +955,78 @@
     </div>
     {% endif %}
 
+    <!-- EN-ROUTE MEDICAL & POLICE ASSISTANCE (MIDWAY OR NEAR DESTINATION) -->
+    {% if emergency_services and (emergency_services.hospitals or emergency_services.police_stations) %}
+    <div style="margin-top:20px;padding:20px;background:rgba(15,23,42,0.95);border-radius:12px;border:1px solid #0284c7;box-shadow:0 4px 20px rgba(2,132,199,0.25);">
+        <h3 style="margin:0 0 8px;color:#38bdf8;font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px;">
+            🚨 {{ t('emergency_aid_title') }}
+        </h3>
+        <p style="color:#94a3b8;font-size:13px;margin:0 0 16px;">
+            Hospitals and Police checkposts reachable midway along your evacuation or situated right near your destination.
+        </p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;">
+            <!-- HOSPITALS -->
+            {% if emergency_services.hospitals %}
+            <div style="background:#1e293b;border-radius:10px;padding:14px;border-left:4px solid #ef4444;">
+                <div style="font-weight:700;color:#f87171;font-size:14px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                    🏥 {{ t('hospitals_header') }}
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    {% for h in emergency_services.hospitals %}
+                    <div style="background:#0f172a;border-radius:8px;padding:10px 12px;border:1px solid #334155;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                        <div>
+                            <div style="font-weight:700;color:#f8fafc;font-size:14px;">{{ h.name }}</div>
+                            <div style="font-size:12px;color:{{ '#34d399' if h.on_route else '#38bdf8' }};margin-top:3px;font-weight:600;">
+                                {% if h.on_route %}
+                                🟢 {{ h.description }}
+                                {% else %}
+                                📍 {{ h.description }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <button type="button" class="chip" style="background:#0284c7;color:white;border:none;padding:6px 12px;font-size:12px;white-space:nowrap;"
+                                onclick="setDest('{{ h.name }}');document.getElementById('searchForm').submit();">
+                            🚑 {{ t('divert_route_btn') }}
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- POLICE STATIONS -->
+            {% if emergency_services.police_stations %}
+            <div style="background:#1e293b;border-radius:10px;padding:14px;border-left:4px solid #38bdf8;">
+                <div style="font-weight:700;color:#38bdf8;font-size:14px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                    🚓 {{ t('police_header') }}
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    {% for p in emergency_services.police_stations %}
+                    <div style="background:#0f172a;border-radius:8px;padding:10px 12px;border:1px solid #334155;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                        <div>
+                            <div style="font-weight:700;color:#f8fafc;font-size:14px;">{{ p.name }}</div>
+                            <div style="font-size:12px;color:{{ '#34d399' if p.on_route else '#38bdf8' }};margin-top:3px;font-weight:600;">
+                                {% if p.on_route %}
+                                🟢 {{ p.description }}
+                                {% else %}
+                                📍 {{ p.description }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <button type="button" class="chip" style="background:#0284c7;color:white;border:none;padding:6px 12px;font-size:12px;white-space:nowrap;"
+                                onclick="setDest('{{ p.name }}');document.getElementById('searchForm').submit();">
+                            🚓 {{ t('divert_route_btn') }}
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
     <p style="color:#94a3b8;margin-top:15px;">
         {{ t('route_note') }}
     </p>
@@ -503,7 +1035,34 @@
 
 <!-- MAP -->
 <div class="map-container">
-    <h2>🗺️ {{ t('map_title') }}</h2>
+    <div class="map-toolbar">
+        <div class="map-title-group">
+            <h2>🗺️ {{ t('map_title') }}</h2>
+            <span style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">
+                LIVE NETWORK
+            </span>
+        </div>
+        <div class="map-quick-actions">
+            <button type="button" class="map-btn" onclick="locateUserGPS()">
+                📍 Locate My GPS
+            </button>
+            <button type="button" class="map-btn" onclick="zoomToRiver()">
+                🌊 Focus River Bank
+            </button>
+            <button type="button" class="map-btn" onclick="zoomToShelters()">
+                🏠 Focus Shelters
+            </button>
+            <button type="button" class="map-btn" onclick="zoomToHospitals()">
+                🏥 Focus Hospitals
+            </button>
+            <button type="button" class="map-btn" onclick="zoomToPolice()">
+                🚓 Focus Police
+            </button>
+            <button type="button" class="map-btn" onclick="map.setView([15.4810, 78.4850], 15)">
+                🔍 Reset View
+            </button>
+        </div>
+    </div>
     <div id="map"></div>
     <div id="routingStatus">
         {% if route %}
@@ -513,8 +1072,8 @@
         {% endif %}
     </div>
 
-    <label style="margin-top:12px;font-weight:normal;cursor:pointer;">
-        <input type="checkbox" id="networkToggle">
+    <label style="margin-top:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:14px;color:#cbd5e1;">
+        <input type="checkbox" id="networkToggle" style="width:16px;height:16px;cursor:pointer;">
         {{ t('show_roads') }}
     </label>
 
@@ -524,6 +1083,8 @@
         <div class="legend-item">🟢 {{ t('leg_safe') }}</div>
         <div class="legend-item">🟠 {{ t('leg_alt') }}</div>
         <div class="legend-item">🏠 {{ t('leg_shelter') }}</div>
+        <div class="legend-item">🏥 Hospital</div>
+        <div class="legend-item">🚓 Police Station</div>
         <div class="legend-item">⚫ {{ t('leg_dotted') }}</div>
     </div>
 
@@ -540,7 +1101,12 @@
 
 <!-- ROAD STATUS TABLE -->
 <div class="road-box">
-    <h2>🚧 {{ t('road_status_title') }}</h2>
+    <div class="table-header-flex">
+        <h2>🚧 {{ t('road_status_title') }}</h2>
+        <div class="table-search-wrap">
+            <input type="text" id="roadSearchInput" placeholder="🔍 Filter roads by name, location, status..." onkeyup="filterRoadTable()">
+        </div>
+    </div>
     <table>
         <thead>
             <tr>
@@ -553,7 +1119,7 @@
                 <th>{{ t('th_weight') }}</th>   <!-- NEW -->
             </tr>
         </thead>
-        <tbody>
+        <tbody id="roadTableBody">
         {% if road_statuses %}
             {% for road in road_statuses %}
             <tr>
@@ -714,24 +1280,78 @@ async function getRealRoadGeometry(start, end) {
 
 /* =========================================================
    PLACE MARKERS (always visible)
-   Teal = shelter, grey = other location. Hover for the name.
+   Teal = shelter, Red = Hospital, Blue = Police, Grey = other
 ========================================================= */
 var shelterNames = {{ shelters|map(attribute='name')|list|tojson }};
+var shelterMap = {
+    {% for s in shelters %}
+    {{ s.name|tojson }}: { cap: {{ s.capacity }}, occ: {{ s.occupied }} },
+    {% endfor %}
+};
+var hospitalNames = {{ hospitals|tojson if hospitals else '["Government Hospital", "Sanjeeva Emergency Hospital"]' }};
+var policeNames = {{ police_stations|tojson if police_stations else '["Town Police Station", "One Town Police Station"]' }};
 var markerLayer = L.layerGroup().addTo(map);
 var allPoints = [];
 
 Object.keys(locations).forEach(function(name) {
     var isShelter = shelterNames.indexOf(name) !== -1;
-    var m = L.circleMarker(locations[name], {
-        radius: isShelter ? 8 : 6,
-        color: "#ffffff",
-        weight: 2,
-        fillColor: isShelter ? "#14b8a6" : "#cbd5e1",
-        fillOpacity: 1
-    }).addTo(markerLayer).bindTooltip((isShelter ? "🏠 " : "📍 ") + name);
+    var isHospital = hospitalNames.indexOf(name) !== -1;
+    var isPolice = policeNames.indexOf(name) !== -1;
+    var shInfo = shelterMap[name];
 
-    var popupHtml = '<div style="color:#0f172a;min-width:170px;font-family:sans-serif;padding:3px;">' +
-        '<b style="font-size:13px;">' + (isShelter ? '🏠 Shelter: ' : '📍 Place: ') + name + '</b><br>' +
+    var icon = "📍";
+    var tag = "General Location";
+    var badgeClass = "poi-generic";
+    var size = 22;
+
+    if (isHospital) {
+        icon = "🏥";
+        tag = isShelter ? "Hospital & Safe Shelter" : "Emergency Hospital (Medical Aid)";
+        badgeClass = "poi-hospital";
+        size = 28;
+    } else if (isPolice) {
+        icon = "🚓";
+        tag = isShelter ? "Police Station & Safe Shelter" : "Police Station (Assistance & Security)";
+        badgeClass = "poi-police";
+        size = 28;
+    } else if (isShelter) {
+        icon = "🏠";
+        tag = "Designated Safe Shelter";
+        badgeClass = "poi-shelter";
+        size = 28;
+    }
+
+    var customIcon = L.divIcon({
+        className: 'custom-poi-pin',
+        html: '<div class="poi-badge ' + badgeClass + '">' + icon + '</div>',
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+        popupAnchor: [0, -Math.floor(size / 2)]
+    });
+
+    var tooltipText = icon + " " + name;
+    if (shInfo) {
+        tooltipText += " (" + (shInfo.cap - shInfo.occ) + " free / " + shInfo.cap + " cap)";
+    }
+
+    var m = L.marker(locations[name], {
+        icon: customIcon
+    }).addTo(markerLayer).bindTooltip(tooltipText);
+
+    var capacityHtml = '';
+    if (shInfo) {
+        var free = shInfo.cap - shInfo.occ;
+        var badgeColor = free > 0 ? '#16a34a' : '#dc2626';
+        capacityHtml = '<div style="margin-top:6px;padding:5px 8px;background:#f1f5f9;border-radius:6px;border:1px solid #e2e8f0;font-size:11px;color:#0f172a;">' +
+            '<b>Space:</b> <span style="color:' + badgeColor + ';font-weight:bold;">' + free + ' free</span> / ' + shInfo.cap + ' total' +
+            '<br><span style="color:#64748b;">Occupied: ' + shInfo.occ + ' persons</span>' +
+            '</div>';
+    }
+
+    var popupHtml = '<div style="color:#0f172a;min-width:190px;font-family:sans-serif;padding:3px;">' +
+        '<b style="font-size:13px;">' + icon + ' ' + name + '</b><br>' +
+        '<span style="font-size:11px;font-weight:700;color:' + (isHospital ? '#dc2626' : (isPolice ? '#0284c7' : (isShelter ? '#16a34a' : '#64748b'))) + ';">' + tag + '</span><br>' +
+        capacityHtml +
         '<div style="margin-top:10px;display:flex;gap:6px;">' +
         '<button type="button" onclick="setStart(\'' + name.replace(/'/g, "\\'") + '\')" style="flex:1;padding:5px 8px;font-size:11px;background:#0284c7;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Set Start</button>' +
         '<button type="button" onclick="setDest(\'' + name.replace(/'/g, "\\'") + '\')" style="flex:1;padding:5px 8px;font-size:11px;background:#16a34a;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Set Dest</button>' +
@@ -1053,10 +1673,125 @@ function copyRouteText() {
 }
 
 /* =========================================================
+   UI INTERACTION & GPS TOOLBAR HELPERS
+========================================================= */
+function setQuickStart(place) {
+    var sel = document.querySelector('select[name="source"]');
+    if (sel) {
+        sel.value = place;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+        sel.style.boxShadow = "0 0 15px rgba(56, 189, 248, 0.8)";
+        setTimeout(function() { sel.style.boxShadow = ""; }, 1000);
+    }
+}
+
+function locateUserGPS() {
+    var status = document.getElementById("routingStatus");
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+    }
+    status.innerText = "🛰️ Acquiring live GPS position...";
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        var lat = pos.coords.latitude;
+        var lon = pos.coords.longitude;
+        var closest = null;
+        var minSq = 1e9;
+        for (var name in locations) {
+            var c = locations[name];
+            var d = Math.pow(c[0] - lat, 2) + Math.pow(c[1] - lon, 2);
+            if (d < minSq) {
+                minSq = d;
+                closest = name;
+            }
+        }
+        if (closest) {
+            setStart(closest);
+            map.setView(locations[closest], 16);
+            L.popup()
+                .setLatLng([lat, lon])
+                .setContent("<b>📍 Your Position</b><br>Snapped to closest evacuation node:<br><b>" + closest + "</b>")
+                .openOn(map);
+            status.innerText = "✅ GPS located! Nearest evacuation node set to: " + closest;
+        }
+    }, function(err) {
+        status.innerText = "❌ GPS signal unavailable: " + err.message;
+        alert("Could not access GPS location: " + err.message);
+    }, { timeout: 10000, enableHighAccuracy: true });
+}
+
+function zoomToRiver() {
+    if (locations["Kundu River Bank"]) {
+        map.setView(locations["Kundu River Bank"], 16);
+    }
+}
+
+function zoomToShelters() {
+    var shelterCoords = [];
+    {% for s in shelters %}
+    if (locations[{{ s.name|tojson }}]) {
+        shelterCoords.push(locations[{{ s.name|tojson }}]);
+    }
+    {% endfor %}
+    if (shelterCoords.length > 0) {
+        var bounds = L.latLngBounds(shelterCoords);
+        map.fitBounds(bounds, { padding: [50, 50] });
+    }
+}
+
+function zoomToHospitals() {
+    var coords = [];
+    hospitalNames.forEach(function(h) {
+        if (locations[h]) coords.push(locations[h]);
+    });
+    if (coords.length > 0) {
+        map.fitBounds(L.latLngBounds(coords), { padding: [50, 50], maxZoom: 16 });
+    }
+}
+
+function zoomToPolice() {
+    var coords = [];
+    policeNames.forEach(function(p) {
+        if (locations[p]) coords.push(locations[p]);
+    });
+    if (coords.length > 0) {
+        map.fitBounds(L.latLngBounds(coords), { padding: [50, 50], maxZoom: 16 });
+    }
+}
+
+function filterRoadTable() {
+    var filter = document.getElementById("roadSearchInput").value.toLowerCase();
+    var rows = document.querySelectorAll("#roadTableBody tr");
+    rows.forEach(function(row) {
+        row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none";
+    });
+}
+
+/* =========================================================
    FIX MAP SIZE
 ========================================================= */
 setTimeout(function() { map.invalidateSize(); }, 1000);
 </script>
+
+<!-- VOICE ASSISTANT SCRIPT -->
+<script>
+window.VOICE_ALIASES = {
+  "Kundu River Bank": ["కుందూ నది", "కుందూ రివర్", "कुंदु नदी", "river bank", "kundu river", "kundu"],
+  "Nandyal Bus Stand": ["బస్ స్టాండ్", "నంద్యాల బస్ స్టాండ్", "बस स्टैंड", "bus stand", "nandyal bus stand"],
+  "Government Hospital": ["ప్రభుత్వ ఆసుపత్రి", "హాస్పిటల్", "सरकारी अस्पताल", "hospital", "govt hospital"],
+  "Railway Station": ["రైల్వే స్టేషన్", "స్టేషన్", "रेलवे स्टेशन", "railway station", "station"],
+  "Evacuation Center": ["పునరావాస కేంద్రం", "ఎవాక్యుయేషన్ సెంటర్", "राहत केंद्र", "evacuation center"],
+  "Market Yard": ["మార్కెట్ యార్డ్", "మార్కెట్", "मार्केट यार्ड", "market yard", "market"],
+  "Gandhi Chowk": ["గాంధీ చౌక్", "गांधी चौक", "gandhi chowk"],
+  "Srinivasa Nagar": ["శ్రీనివాస నగర్", "శ్రీనివాస్ నగర్", "श्रीनिवास नगर", "srinivasa nagar"],
+  "Municipal School Shelter": ["మున్సిపల్ స్కూల్", "స్కూల్ షెల్టర్", "नगर निगम स्कूल", "municipal school shelter", "school shelter"],
+  "Community Hall Shelter": ["కమ్యూనిటీ హాల్", "कम्युनिटी हॉल", "community hall shelter", "community hall"],
+  "Town Police Station": ["టౌన్ పోలీస్ స్టేషన్", "పోలీస్ స్టేషన్", "టాస్క్ ఫోర్స్", "टाउन पुलिस स्टेशन", "पुलिस स्टेशन", "town police station", "town police"],
+  "One Town Police Station": ["వన్ టౌన్ పోలీస్ స్టేషన్", "వన్ టౌన్", "वन टाउन पुलिस स्टेशन", "one town police station", "one town police", "one town"],
+  "Sanjeeva Emergency Hospital": ["సంజీవ ఆసుపత్రి", "సంజీవ ఎమర్జెన్సీ", "సంజీవ హాస్పిటల్", "संजीव अस्पताल", "sanjeeva hospital", "sanjeeva emergency hospital", "sanjeeva"]
+};
+</script>
+<script src="/static/voice.js"></script>
 </body>
 </html>
 

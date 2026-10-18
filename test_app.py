@@ -115,6 +115,16 @@ class TestAppEndpoints:
         assert res.status_code == 200
         assert b"850 people" in res.data
 
+    def test_admin_update_shelter(self, client):
+        client.post("/login", data={"password": "testpass"})
+        res = client.post("/update_shelter", data={
+            "name": "Town Police Station",
+            "capacity": "250",
+            "occupied": "60"
+        }, follow_redirects=True)
+        assert res.status_code == 200
+        assert b"Updated shelter Town Police Station" in res.data
+
     def test_reset_shelters(self, client):
         client.post("/login", data={"password": "testpass"})
         

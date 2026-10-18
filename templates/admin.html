@@ -4,38 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Road & Flood Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
-        body { margin: 0; font-family: Arial, sans-serif;
-               background: #0f172a; color: white; }
-        .header { background: linear-gradient(135deg, #0f172a, #1e293b);
-                  padding: 25px; text-align: center;
-                  border-bottom: 2px solid #334155; }
-        .header h1 { margin: 0; color: #38bdf8; font-size: 30px; }
-        .header p { color: #cbd5e1; margin-top: 8px; }
-        .container { width: 95%; max-width: 1200px; margin: 25px auto; }
-        a.back { color: #38bdf8; text-decoration: none; font-weight: bold; }
-        .msg { background: #14532d; color: #bbf7d0; padding: 15px;
-               border-radius: 8px; margin-bottom: 20px; }
-        .err { background: #7f1d1d; color: #fecaca; padding: 15px;
-               border-radius: 8px; margin-bottom: 20px; }
-        .road-box { background: #1e293b; padding: 20px;
-                    border-radius: 12px; overflow-x: auto; }
+        body { margin: 0; font-family: 'Inter', sans-serif;
+               background: #0b1120; color: #f8fafc;
+               background-image: radial-gradient(circle at 10% 10%, rgba(14, 165, 233, 0.08) 0%, transparent 40%); }
+        .header { background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(11, 17, 32, 0.9));
+                  padding: 26px 20px; text-align: center;
+                  border-bottom: 1px solid rgba(56, 189, 248, 0.2); }
+        .header h1 { margin: 0; color: #f8fafc; font-size: 28px; font-weight: 800; }
+        .header p { color: #94a3b8; margin-top: 8px; font-size: 14px; }
+        .container { width: 95%; max-width: 1250px; margin: 25px auto; }
+        a.back { color: #38bdf8; text-decoration: none; font-weight: 600; padding: 6px 12px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; }
+        a.back:hover { background: #1e293b; color: white; }
+        .msg { background: rgba(20, 83, 45, 0.85); color: #bbf7d0; padding: 14px 18px;
+               border-radius: 8px; margin-bottom: 20px; border: 1px solid #16a34a; font-weight: 600; }
+        .err { background: rgba(127, 29, 29, 0.85); color: #fecaca; padding: 14px 18px;
+               border-radius: 8px; margin-bottom: 20px; border: 1px solid #ef4444; font-weight: 600; }
+        .road-box { background: rgba(17, 28, 51, 0.9); padding: 22px;
+                    border-radius: 14px; overflow-x: auto; border: 1px solid rgba(56, 189, 248, 0.2);
+                    box-shadow: 0 8px 30px rgba(0,0,0,0.3); margin-bottom: 25px; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #334155; padding: 12px; }
-        td { padding: 10px; text-align: center;
-             border-bottom: 1px solid #475569; }
-        select { padding: 8px; border-radius: 6px;
-                 border: 1px solid #475569;
-                 background: #0f172a; color: white; }
-        .save-btn { padding: 8px 16px; background: #0284c7; color: white;
-                    border: none; border-radius: 6px; font-weight: bold;
-                    cursor: pointer; }
-        .save-btn:hover { background: #0369a1; }
-        .low, .open { color: #22c55e; font-weight: bold; }
-        .medium { color: #f59e0b; font-weight: bold; }
-        .high, .blocked { color: #ef4444; font-weight: bold; }
-        .submerged { color: #a855f7; font-weight: bold; }
+        th { background: #1e293b; padding: 12px; color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 12px; text-align: center;
+             border-bottom: 1px solid #334155; font-size: 14px; }
+        tr:hover td { background: rgba(56, 189, 248, 0.04); }
+        select, input[type="number"] { padding: 8px 12px; border-radius: 6px;
+                 border: 1px solid #334155;
+                 background: #0f172a; color: white; outline: none; }
+        select:focus, input[type="number"]:focus { border-color: #38bdf8; }
+        .save-btn { padding: 8px 16px; background: linear-gradient(135deg, #0284c7, #0369a1); color: white;
+                    border: none; border-radius: 6px; font-weight: 600;
+                    cursor: pointer; transition: all 0.2s ease; }
+        .save-btn:hover { background: #0369a1; transform: translateY(-1px); }
+        .low, .open { color: #34d399; font-weight: bold; }
+        .medium { color: #fbbf24; font-weight: bold; }
+        .high, .blocked { color: #f87171; font-weight: bold; }
+        .submerged { color: #c084fc; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -197,25 +205,46 @@
     </div>
 
     <div class="road-box" style="margin-top:25px;">
-        <h2 style="color:#38bdf8;margin-top:0;">🏠 Shelter Occupancy</h2>
+        <h2 style="color:#38bdf8;margin-top:0;">🏠 Shelter Occupancy & Capacity Management</h2>
+        <p style="color:#94a3b8;margin-top:0;">
+            Manage available space or persons occupying space in designated shelters, hospitals, and police stations.
+        </p>
         <table>
             <thead>
                 <tr>
-                    <th>Shelter</th>
-                    <th>Capacity</th>
-                    <th>Occupied</th>
-                    <th>Free</th>
+                    <th>Facility</th>
+                    <th>Capacity (Max Space)</th>
+                    <th>Occupied (Persons)</th>
+                    <th>Free Space</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
             {% for s in shelters %}
                 <tr>
-                    <td>{{ s.name }}</td>
-                    <td>{{ s.capacity }}</td>
-                    <td>{{ s.occupied }}</td>
-                    <td class="{{ 'high' if s.is_full() else 'low' }}">
-                        {{ s.available() }}
-                    </td>
+                    <form method="POST" action="/update_shelter">
+                        <input type="hidden" name="name" value="{{ s.name }}">
+                        <td style="text-align:left;font-weight:600;">
+                            {% if s.name in ['Government Hospital', 'Sanjeeva Emergency Hospital'] %}🏥
+                            {% elif s.name in ['Town Police Station', 'One Town Police Station'] %}🚓
+                            {% else %}🏠{% endif %}
+                            {{ s.name }}
+                        </td>
+                        <td>
+                            <input type="number" name="capacity" value="{{ s.capacity }}" min="1"
+                                   style="width:90px;padding:6px;background:#0f172a;border:1px solid #334155;color:#f8fafc;border-radius:6px;text-align:center;">
+                        </td>
+                        <td>
+                            <input type="number" name="occupied" value="{{ s.occupied }}" min="0" max="{{ s.capacity }}"
+                                   style="width:90px;padding:6px;background:#0f172a;border:1px solid #334155;color:#f8fafc;border-radius:6px;text-align:center;">
+                        </td>
+                        <td class="{{ 'high' if s.is_full() else 'low' }}" style="font-weight:bold;">
+                            {{ s.available() }}
+                        </td>
+                        <td>
+                            <button class="save-btn" type="submit" style="padding:6px 14px;">Save</button>
+                        </td>
+                    </form>
                 </tr>
             {% endfor %}
             </tbody>

@@ -9,16 +9,31 @@
     "Gandhi Chowk": [15.483, 78.482],
     "Srinivasa Nagar": [15.476, 78.487],
     "Municipal School Shelter": [15.485, 78.484],
-    "Community Hall Shelter": [15.479, 78.49]
+    "Community Hall Shelter": [15.479, 78.49],
+    "Town Police Station": [15.4825, 78.4842],
+    "Sanjeeva Emergency Hospital": [15.484, 78.4868],
+    "One Town Police Station": [15.4848, 78.4885]
   },
   "shelters": {
     "Evacuation Center": 1000,
     "Municipal School Shelter": 600,
-    "Community Hall Shelter": 400
+    "Community Hall Shelter": 400,
+    "Government Hospital": 500,
+    "Sanjeeva Emergency Hospital": 300,
+    "Town Police Station": 200,
+    "One Town Police Station": 150
+  },
+  "shelter_occupancy": {
+    "Evacuation Center": 0,
+    "Municipal School Shelter": 0,
+    "Community Hall Shelter": 0,
+    "Government Hospital": 150,
+    "Sanjeeva Emergency Hospital": 80,
+    "Town Police Station": 40,
+    "One Town Police Station": 30
   },
   "zone_population": {
     "Nandyal Bus Stand": 300,
-    "Government Hospital": 450,
     "Railway Station": 250,
     "Kundu River Bank": 800,
     "Market Yard": 400,
@@ -160,6 +175,70 @@
       "end": "Srinivasa Nagar",
       "distance_km": 1.6,
       "flood_level": "medium",
+      "status": "open"
+    },
+    {
+      "name": "Gandhi Chowk - Town Police Station",
+      "start": "Gandhi Chowk",
+      "end": "Town Police Station",
+      "distance_km": 0.8,
+      "flood_level": "low",
+      "status": "open"
+    },
+    {
+      "name": "Town Police Station - Government Hospital",
+      "start": "Town Police Station",
+      "end": "Government Hospital",
+      "distance_km": 0.9,
+      "flood_level": "low",
+      "status": "open"
+    },
+    {
+      "name": "Town Police Station - Municipal School",
+      "start": "Town Police Station",
+      "end": "Municipal School Shelter",
+      "distance_km": 1.0,
+      "flood_level": "low",
+      "status": "open"
+    },
+    {
+      "name": "Government Hospital - Sanjeeva Hospital",
+      "start": "Government Hospital",
+      "end": "Sanjeeva Emergency Hospital",
+      "distance_km": 1.0,
+      "flood_level": "low",
+      "status": "open"
+    },
+    {
+      "name": "Sanjeeva Hospital - Municipal School",
+      "start": "Sanjeeva Emergency Hospital",
+      "end": "Municipal School Shelter",
+      "distance_km": 0.9,
+      "flood_level": "low",
+      "status": "open"
+    },
+    {
+      "name": "Sanjeeva Hospital - One Town Police",
+      "start": "Sanjeeva Emergency Hospital",
+      "end": "One Town Police Station",
+      "distance_km": 0.8,
+      "flood_level": "low",
+      "status": "open"
+    },
+    {
+      "name": "One Town Police - Evacuation Center",
+      "start": "One Town Police Station",
+      "end": "Evacuation Center",
+      "distance_km": 0.7,
+      "flood_level": "low",
+      "status": "open"
+    },
+    {
+      "name": "One Town Police - Community Hall",
+      "start": "One Town Police Station",
+      "end": "Community Hall Shelter",
+      "distance_km": 1.1,
+      "flood_level": "low",
       "status": "open"
     }
   ]

@@ -130,6 +130,10 @@ TEXT = {
         "voice_not_found": "Could not match a place. Please try again.",
         "voice_mic_denied": "Microphone permission was denied.",
         "voice_offline": "Could not reach the server.",
+        "emergency_aid_title": "En-Route Assistance: Nearby Hospitals & Police Stations",
+        "hospitals_header": "Hospitals & Medical Centers",
+        "police_header": "Police Stations & Security Checkposts",
+        "divert_route_btn": "Route Here",
     },
     "te": {
         "title": "వరద తరలింపు మార్గ ప్రణాళిక",
@@ -247,6 +251,10 @@ TEXT = {
         "voice_not_found": "ప్రదేశం గుర్తించలేకపోయాం. దయచేసి మళ్ళీ ప్రయత్నించండి.",
         "voice_mic_denied": "మైక్రోఫోన్ అనుమతి నిరాకరించబడింది.",
         "voice_offline": "సర్వర్‌ను చేరుకోలేకపోయాం.",
+        "emergency_aid_title": "మార్గంలో అత్యవసర సహాయం: సమీప ఆసుపత్రులు & పోలీస్ స్టేషన్లు",
+        "hospitals_header": "ఆసుపత్రులు & వైద్య కేంద్రాలు",
+        "police_header": "పోలీస్ స్టేషన్లు & భద్రతా తనిఖీ కేంద్రాలు",
+        "divert_route_btn": "ఇక్కడికి మార్గం చూపించు",
     },
     "hi": {
         "title": "बाढ़ निकासी मार्ग योजनाकार",
@@ -364,6 +372,10 @@ TEXT = {
         "voice_not_found": "स्थान पहचान नहीं पाया। कृपया फिर कोशिश करें।",
         "voice_mic_denied": "माइक्रोफ़ोन की अनुमति नहीं मिली।",
         "voice_offline": "सर्वर तक नहीं पहुँच सका।",
+        "emergency_aid_title": "रास्ते में आपातकालीन सहायता: निकटतम अस्पताल और पुलिस स्टेशन",
+        "hospitals_header": "अस्पताल और चिकित्सा केंद्र",
+        "police_header": "पुलिस स्टेशन और सुरक्षा चौकियां",
+        "divert_route_btn": "यहाँ का मार्ग देखें",
     },
 }
 

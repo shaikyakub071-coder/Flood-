@@ -174,11 +174,20 @@ def validate_data(raw):
             f"data.json has {len(problems)} problem(s):\n - "
             + "\n - ".join(problems))
 
+    # ---- shelter occupancy (optional) -----------------------------------
+    shelter_occupancy = {}
+    raw_occ = raw.get("shelter_occupancy", {})
+    if isinstance(raw_occ, dict):
+        for name, occ in raw_occ.items():
+            if name in shelters and _is_whole(occ) and occ >= 0:
+                shelter_occupancy[name] = occ
+
     return {
         "locations": locations,
         "shelters": shelters,
         "zone_population": zone_population,
         "roads": roads,
+        "shelter_occupancy": shelter_occupancy,
     }
 
 

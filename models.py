@@ -534,5 +534,88 @@ class RoadNetwork:
 
         return sim_network
 
+    # ---- emergency services en-route (hospitals & police) ---------------
+    HOSPITALS = ("Government Hospital", "Sanjeeva Emergency Hospital")
+    POLICE_STATIONS = ("Town Police Station", "One Town Police Station")
+
+    def get_en_route_emergency_services(self, route, graph=None):
+        """Identifies hospitals and police stations that are either directly on
+        the route, accessible as a midway checkpoint, or located near the destination."""
+        if not route:
+            return {"hospitals": [], "police_stations": []}
+        if graph is None:
+            graph = self.build_graph()
+
+        route_set = set(route)
+        n_stops = len(route)
+        services = {"hospitals": [], "police_stations": []}
+
+        all_targets = [
+            (self.HOSPITALS, "hospitals", "Hospital"),
+            (self.POLICE_STATIONS, "police_stations", "Police Station")
+        ]
+
+        for facility_list, key, category in all_targets:
+            for fac in facility_list:
+                if not any(r.start == fac or r.end == fac for r in self.roads):
+                    continue
+
+                if fac in route_set:
+                    idx = route.index(fac)
+                    is_dest = (idx == n_stops - 1)
+                    is_mid = (0 < idx < n_stops - 1)
+                    services[key].append({
+                        "name": fac,
+                        "category": category,
+                        "on_route": True,
+                        "detour_km": 0.0,
+                        "via_node": fac,
+                        "near_destination": is_dest or (idx >= n_stops - 2),
+                        "midway": is_mid,
+                        "description": "Directly on your route" if not is_dest else "Your Destination"
+                    })
+                else:
+                    best_detour = None
+                    best_via = None
+                    best_idx = None
+                    for idx, node in enumerate(route):
+                        if graph.has_node(node) and graph.has_node(fac):
+                            try:
+                                path = nx.shortest_path(graph, node, fac, weight="distance")
+                                km = sum(graph[a][b]["distance"] for a, b in zip(path, path[1:]))
+                                if best_detour is None or km < best_detour:
+                                    best_detour = km
+                                    best_via = node
+                                    best_idx = idx
+                            except (nx.NetworkXNoPath, nx.NodeNotFound):
+                                pass
+
+                    if best_detour is not None and best_detour <= 3.5:
+                        near_dest = (best_idx >= max(n_stops - 2, 0))
+                        midway = (0 < best_idx < n_stops - 1)
+                        if near_dest:
+                            pos_desc = f"Near destination (~{best_detour:.1f} km from {best_via})"
+                        elif midway:
+                            pos_desc = f"Midway checkpoint (~{best_detour:.1f} km from {best_via})"
+                        else:
+                            pos_desc = f"Near start (~{best_detour:.1f} km from {best_via})"
+
+                        services[key].append({
+                            "name": fac,
+                            "category": category,
+                            "on_route": False,
+                            "detour_km": round(best_detour, 1),
+                            "via_node": best_via,
+                            "near_destination": near_dest,
+                            "midway": midway,
+                            "description": pos_desc
+                        })
+
+        for k in services:
+            services[k].sort(key=lambda s: (not s["on_route"], not s["near_destination"], s["detour_km"]))
+
+        return services
+
+
 
             
