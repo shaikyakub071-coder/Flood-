@@ -25,6 +25,11 @@ while the emergency is happening.
 - **Emergency Export & Sharing**: 1-click printable PDF route sheet, WhatsApp emergency guidance message generator, and clipboard copy.
 - **Flood Surge Simulator**: Dynamic slider (+0.5m to +1.5m Kundu River rise) showing live route adaptation and road submersion.
 - **REST API (`/api/route`, `/api/simulate`)**: Clean JSON endpoints for third-party disaster dispatch systems and mobile clients.
+- **Voice guidance & voice input** (English, Telugu, Hindi): the route is read
+  aloud step by step (`/api/voice` builds the sentences, `static/voice.js`
+  speaks them with the browser's Web Speech API), and users can say
+  "from Kundu River Bank to nearest shelter, 5 people" to fill the form.
+  See `voice_snippet.html` for the buttons to add to `index.html`.
 - **Map data in `data.json`**, validated at start-up, so a typo is reported
   immediately instead of causing a wrong route.
 
@@ -52,28 +57,4 @@ appears if the drawn road differs a lot from the graph distance.
 | `HazardZone`  | Flood-prone location; danger derived from connected roads; tracks population and vulnerable evacuees (`risk_level()`). |
 | `RoadNetwork` | Graph network holding roads, shelters, and zones; computes safe shortest path, nearest shelters, alternative routes, and full multi-zone allocation (`find_route()`, `allocate_evacuation()`). |
 
-## Quickstart
 
-### 1. Install dependencies
-
-```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-```
-
-### 2. Run tests
-
-```bash
-pytest -v
-```
-
-### 3. Run the web application
-
-```bash
-python3 app.py
-```
-
-Then open your browser to `http://localhost:5000`.
-
-- **Default Admin Password**: Configurable via `ADMIN_PASSWORD` environment variable (default: `admin123` in local development).
-- **Database**: Automatically uses local SQLite (`yakub.db`) when `DATABASE_URL` is not set, or connects to PostgreSQL when deployed on Render or production.
